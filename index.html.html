@@ -481,6 +481,7 @@ tr:hover td { background: #f8fafc; }
       <button class="orhc-dim-btn" onclick="showDpphDim('dia',this)">Por Dia</button>
       <button class="orhc-dim-btn" onclick="showDpphDim('rota',this)">Por Rota (ID)</button>
       <button class="orhc-dim-btn" onclick="showDpphDim('wow',this)">📅 Sem. vs Sem.</button>
+      <button class="orhc-dim-btn" onclick="showDpphDim('wowdia',this)">📆 Sem × Sem por dia</button>
     </div>
 
     <div id="dpph-dim-carrier" class="dpph-dim-panel">
@@ -549,6 +550,12 @@ tr:hover td { background: #f8fafc; }
         <div class="tbl-wrap" style="max-height:820px;"><table><thead><tr>
           <th>Dia Semana</th><th>Data (Atual)</th><th>Rotas</th><th>Conf.</th><th>DPPH %</th><th>Data (Ant.)</th><th>Rotas</th><th>Conf.</th><th>DPPH %</th><th>Δ pp</th>
         </tr></thead><tbody id="tbl-dpph-wow"></tbody></table></div>
+      </div>
+    </div>
+    <div id="dpph-dim-wowdia" class="dpph-dim-panel" style="display:none;">
+      <div class="full-card">
+        <h3>Semana Atual vs Anterior — por Carrier e por Dia</h3>
+        <div id="dpph-wowdia-container"></div>
       </div>
     </div>
   </div>
@@ -655,26 +662,35 @@ async function tryLoadPublishedCsv() {
 function prepareRows(rows) {
   return rows
     .filter(r => r.TIPO_VEICULO && r.TIPO_VEICULO.trim() !== '')
-    .map(r => ({
-      tipo: r.TIPO_VEICULO,
-      data: r.DATA_INICIO,
-      semana: parseInt(r.SEMANA) || 0,
-      plan: parseFloat(String(r.ORH_PLAN || '').replace(',','.')),
-      hours: parseFloat(String(r.ORH_HOURS || '').replace(',','.')),
-      contrato: parseFloat(String(r.orh_contrato || '').replace(',','.')),
-      stem: parseFloat(String(r.STEM_OUT || '').replace(',','.')),
-      orhc: parseInt(r.ORHC) || 0,
-      carrier: (r.CARRIER_NAME || '').trim() || '–',
-      base: (r.BASE || '').trim() || '–',
-      cluster: (r.CLUSTER || '').trim() || '–',
-      driver: String(r.SHP_LG_DRIVER_ID || '').trim() || '–',
-      routeid: String(r.SHP_LG_ROUTE_ID || '').trim() || '–',
-      ciclo: (r.CICLO || '').trim() || '–',
-      status: parseFloat(String(r.STEM_OUT || '').replace(',','.')) < 1 ? 'Dentro' : 'Fora',
-      orhcStatus: (parseInt(r.ORHC) || 0) === 1 ? 'Dentro' : 'Excedeu',
-      dpph: parseFloat(String(r.DPPH || '').replace(',','.')),
-      entregues: parseInt(r.QTDE_ENTREGUE) || 0
-    }))
+    .map(r => {
+      const hours = parseFloat(String(r.ORH_HOURS || '').replace(',','.'));
+      // Numerador do DPPH = coluna DELIVERED (mesma definição da planilha de referência:
+      // SOMASES(DELIVERED) / SOMASES(ORH_HOURS), com BASE preenchida).
+      const delivRaw = String(r.DELIVERED == null ? '' : r.DELIVERED).trim();
+      const delivered = delivRaw === '' ? NaN : parseInt(delivRaw.replace(',','.'));
+      const dpph = (!isNaN(hours) && hours > 0 && !isNaN(delivered))
+        ? +(delivered / hours).toFixed(2) : NaN;
+      return {
+        tipo: r.TIPO_VEICULO,
+        data: r.DATA_INICIO,
+        semana: parseInt(r.SEMANA) || 0,
+        plan: parseFloat(String(r.ORH_PLAN || '').replace(',','.')),
+        hours: hours,
+        contrato: parseFloat(String(r.orh_contrato || '').replace(',','.')),
+        stem: parseFloat(String(r.STEM_OUT || '').replace(',','.')),
+        orhc: parseInt(r.ORHC) || 0,
+        carrier: (r.CARRIER_NAME || '').trim() || '–',
+        base: (r.BASE || '').trim() || '–',
+        cluster: (r.CLUSTER || '').trim() || '–',
+        driver: String(r.SHP_LG_DRIVER_ID || '').trim() || '–',
+        routeid: String(r.SHP_LG_ROUTE_ID || '').trim() || '–',
+        ciclo: (r.CICLO || '').trim() || '–',
+        status: parseFloat(String(r.STEM_OUT || '').replace(',','.')) < 1 ? 'Dentro' : 'Fora',
+        orhcStatus: (parseInt(r.ORHC) || 0) === 1 ? 'Dentro' : 'Excedeu',
+        dpph: dpph,
+        entregues: isNaN(delivered) ? 0 : delivered
+      };
+    })
     .filter(r => !isNaN(r.hours) && !isNaN(r.contrato));
 }
 
@@ -1590,6 +1606,7 @@ function renderDpphTab() {
 
   const rows = applyIdFilterToRows(rawRows.filter(r =>
     !isNaN(r.dpph) &&
+    r.base !== '–' &&
     selTipos.includes(r.tipo) &&
     (selCarriers.length===0 || selCarriers.includes(r.carrier)) &&
     (selBases.length===0    || selBases.includes(r.base)) &&
@@ -1603,6 +1620,7 @@ function renderDpphTab() {
   ));
   const rowsAllSemsDpph = rawRows.filter(r =>
     !isNaN(r.dpph) &&
+    r.base !== '–' &&
     selTipos.includes(r.tipo) &&
     (selCarriers.length===0 || selCarriers.includes(r.carrier)) &&
     (selBases.length===0    || selBases.includes(r.base)) &&
@@ -1663,6 +1681,7 @@ function renderDpphTab() {
   window._dpphRotaRows = rows;
   if (document.getElementById('dpph-dim-rota')?.style.display !== 'none') _renderDpphRota(rows);
   _renderDpphWow(rows, rowsAllSemsDpph);
+  _renderDpphWowDia(rows, rowsAllSemsDpph);
 }
 
 function _renderDpphDim(rows, field, tblId, chartId, allSemRows) {
@@ -1798,6 +1817,93 @@ function _renderDpphWow(rows, allSemRows) {
     return sh > 0 ? +(se/sh).toFixed(2) : null;
   };
   _renderDowTable('tbl-dpph-wow', curRows, prevRows, pctFnDpph, DPPH_META);
+}
+
+// ===== DPPH: Semana atual vs anterior, detalhado por carrier e por dia =====
+// (layout do comparativo: colunas Sem.Ant | Sem.Atual | WoW | um por dia da semana atual)
+function _renderDpphWowDia(rows, allSemRows) {
+  const container = document.getElementById('dpph-wowdia-container');
+  if (!container) return;
+  const src = allSemRows || rows;
+
+  const curSems = [...new Set(rows.map(r=>r.semana))].sort((a,b)=>a-b);
+  if (!curSems.length) {
+    container.innerHTML = '<p style="color:#64748b;padding:16px">Sem dados para o período/filtros selecionados.</p>';
+    return;
+  }
+  const curSem = curSems[curSems.length-1];
+  const allSems = [...new Set(src.map(r=>r.semana))].sort((a,b)=>a-b);
+  const curIdx = allSems.indexOf(curSem);
+  const prevSem = curIdx > 0 ? allSems[curIdx-1] : null;
+
+  // Dias da semana atual, em ordem cronológica
+  const dias = [...new Set(src.filter(r=>r.semana===curSem).map(r=>r.data))]
+    .filter(Boolean).sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
+
+  const dm = s => { const m = String(s||'').match(/^(\d{2})\/(\d{2})\/\d{4}$/); return m ? (+m[1])+'/'+(+m[2]) : s; };
+  const dpphOf = list => {
+    if (!list || !list.length) return null;
+    const e = list.reduce((s,r)=>s+(r.entregues||0),0);
+    const h = list.reduce((s,r)=>s+(r.hours||0),0);
+    return h > 0 ? +(e/h).toFixed(2) : null;
+  };
+
+  const carriers = [...new Set(src.map(r=>r.carrier))].filter(v=>v && v!=='–');
+  let dataRows = carriers.map(c => {
+    const cr = src.filter(r=>r.carrier===c);
+    const prev = prevSem!==null ? dpphOf(cr.filter(r=>r.semana===prevSem)) : null;
+    const cur  = dpphOf(cr.filter(r=>r.semana===curSem));
+    const days = dias.map(d => dpphOf(cr.filter(r=>r.semana===curSem && r.data===d)));
+    return { carrier:c, prev, cur, days };
+  }).filter(r => r.cur!==null || r.prev!==null);
+
+  // Pior DPPH da semana atual primeiro (carriers sem dado atual vão para o fim)
+  dataRows.sort((a,b) => (a.cur===null) - (b.cur===null) || (a.cur??0) - (b.cur??0));
+
+  const cell = v => {
+    if (v===null || isNaN(v)) return '<td style="text-align:center;color:#cbd5e1">–</td>';
+    const bg = v>=DPPH_META ? '#dcfce7' : v>=DPPH_META*0.9 ? '#fef9c3' : v>=DPPH_META*0.75 ? '#ffedd5' : '#fee2e2';
+    return `<td style="text-align:center;background:${bg};color:${dpphColor(v)};font-weight:700">${v.toFixed(2)}</td>`;
+  };
+  const wowCell = (prev,cur) => {
+    if (prev===null || cur===null) return '<td style="text-align:center;color:#cbd5e1">–</td>';
+    const d = +(cur-prev).toFixed(2); const up = d>=0;
+    return `<td style="text-align:center;font-weight:700;color:${up?'#16a34a':'#dc2626'}">${up?'▲':'▼'} ${up?'+':''}${d.toFixed(2)}</td>`;
+  };
+
+  const totPrev = prevSem!==null ? dpphOf(src.filter(r=>r.semana===prevSem)) : null;
+  const totCur  = dpphOf(src.filter(r=>r.semana===curSem));
+  const totDays = dias.map(d => dpphOf(src.filter(r=>r.semana===curSem && r.data===d)));
+
+  const dayHeaders = dias.map(d => `<th style="text-align:center">${dm(d)}</th>`).join('');
+  const prevLabel = prevSem!==null ? ('Sem '+prevSem) : 'Sem ant.';
+
+  container.innerHTML = `
+    <div class="tbl-wrap" style="max-height:820px;">
+      <table>
+        <thead><tr>
+          <th>Carrier</th>
+          <th style="text-align:center">${prevLabel}</th>
+          <th style="text-align:center">Sem ${curSem}</th>
+          <th style="text-align:center">WoW</th>
+          ${dayHeaders}
+        </tr></thead>
+        <tbody>
+          ${dataRows.map(r => `<tr>
+            <td><strong>${r.carrier}</strong></td>
+            ${cell(r.prev)}${cell(r.cur)}${wowCell(r.prev, r.cur)}${r.days.map(cell).join('')}
+          </tr>`).join('')}
+          <tr style="border-top:2px solid #0f3460;background:#f1f5f9">
+            <td><strong>TOTAL (todos)</strong></td>
+            ${cell(totPrev)}${cell(totCur)}${wowCell(totPrev, totCur)}${totDays.map(cell).join('')}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:#64748b;font-size:0.8rem;margin-top:8px">
+      DPPH ponderado (entregues ÷ horas). Verde ≥ meta ${DPPH_META}; amarelo/laranja/vermelho conforme fica abaixo dela.
+      As colunas de dia (${dias.map(dm).join(', ') || '—'}) referem-se à semana ${curSem}.
+    </p>`;
 }
 
 function showDpphDim(dim, btn) {
