@@ -130,6 +130,7 @@ tr:hover td { background: #f8fafc; }
 .gap-pos { color:#16a34a; font-weight:700; }
 .gap-neg { color:#dc2626; font-weight:700; }
 </style>
+<script id="embedded-data-block">/*__EMBEDDED_DATA__*/</script>
 </head>
 <body>
 
@@ -156,7 +157,10 @@ tr:hover td { background: #f8fafc; }
       <h1 id="dash-title">Análise ORH + Stem Out</h1>
       <p id="dash-subtitle">Carregando...</p>
     </div>
-    <button class="btn-reload" onclick="resetDashboard()">↩ Carregar novo CSV</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-reload" id="btn-share" onclick="gerarVersaoCompartilhavel()" title="Gera um arquivo HTML com os dados embutidos para enviar a outras pessoas">📤 Gerar versão para compartilhar</button>
+      <button class="btn-reload" onclick="resetDashboard()">↩ Carregar novo CSV</button>
+    </div>
   </header>
 
   <div class="tabs" id="tabs-bar">
@@ -571,9 +575,13 @@ tr:hover td { background: #f8fafc; }
 </div>
 
 <script>
+// ===== HTML PRISTINO (capturado antes de qualquer render, para gerar a versão compartilhável) =====
+const PRISTINE_HTML = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
 // ===== STATE =====
 let rawRows = [];
 let allTipos = [];
+let currentFilename = '';
 // Tipos focados na análise de ORH (contratos 8h / 8,88h)
 const ORH_TIPOS = [
   'UTILITÁRIOS','VAN','VUC','VUC RENTAL TKS','FROTA FIXA LARGE VAN FORD AUTO',
@@ -581,6 +589,14 @@ const ORH_TIPOS = [
   'VUC VAMOS 2025','BULK - VUC EQUIPE ÚNICA POOL'
 ];
 const chartRegistry = {};
+
+// Converte 'DD/MM/AAAA' em chave ordenável 'AAAAMMDD' para ordenação cronológica.
+// (Se vier em outro formato, cai no fallback e ordena como texto.)
+function dateKey(d) {
+  const s = String(d || '');
+  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? m[3] + m[2] + m[1] : s;
+}
 
 // ===== UPLOAD =====
 const dropZone = document.getElementById('drop-zone');
@@ -600,17 +616,40 @@ function processFile(file) {
   Papa.parse(file, {
     header: true, skipEmptyLines: true,
     complete: results => {
-      const rows = results.data;
-      if (!rows.length || !rows[0].TIPO_VEICULO) {
-        document.getElementById('upload-error').style.display = 'block'; return;
+      if (!buildFromParsedRows(results.data, file.name)) {
+        document.getElementById('upload-error').style.display = 'block';
       }
-      rawRows = prepareRows(rows);
-      if (!rawRows.length) { document.getElementById('upload-error').style.display = 'block'; return; }
-      allTipos = [...new Set(rawRows.map(r => r.tipo))].filter(Boolean).sort();
-      buildDashboard(file.name);
     },
     error: () => { document.getElementById('upload-error').style.display = 'block'; }
   });
+}
+
+// Monta o dashboard a partir das linhas já parseadas pelo PapaParse.
+// Retorna true se deu certo, false se o CSV é inválido/vazio.
+function buildFromParsedRows(rows, nameForTitle) {
+  if (!rows || !rows.length || !rows[0].TIPO_VEICULO) return false;
+  const prepared = prepareRows(rows);
+  if (!prepared.length) return false;
+  rawRows = prepared;
+  allTipos = [...new Set(rawRows.map(r => r.tipo))].filter(Boolean).sort();
+  currentFilename = nameForTitle;
+  buildDashboard(nameForTitle);
+  return true;
+}
+
+// Tenta carregar um CSV publicado junto ao site (mesma pasta): ./dados.csv
+// Usado quando o dashboard é hospedado e queremos que o visitante veja os
+// dados sem precisar importar nada. Se o arquivo não existir, retorna false.
+async function tryLoadPublishedCsv() {
+  try {
+    const resp = await fetch('./dados.csv', { cache: 'no-store' });
+    if (!resp.ok) return false;
+    const text = await resp.text();
+    const results = Papa.parse(text, { header: true, skipEmptyLines: true });
+    return buildFromParsedRows(results.data, 'Dados publicados');
+  } catch (e) {
+    return false;
+  }
 }
 
 function prepareRows(rows) {
@@ -647,6 +686,54 @@ function resetDashboard() {
   // destroy charts
   Object.values(chartRegistry).forEach(c => c && c.destroy());
   Object.keys(chartRegistry).forEach(k => delete chartRegistry[k]);
+}
+
+// ===== GERAR VERSÃO COMPARTILHÁVEL (dados embutidos) =====
+function gerarVersaoCompartilhavel() {
+  if (!rawRows.length) { alert('Importe um CSV antes de gerar a versão compartilhável.'); return; }
+  const btn = document.getElementById('btn-share');
+  const txtOrig = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Gerando...'; btn.disabled = true; }
+
+  try {
+    // Serializa os dados já processados. Escapa "<" para não quebrar a tag <script>.
+    const dataJson = JSON.stringify(rawRows).replace(/</g, '\\u003c');
+    const nomeJson  = JSON.stringify(currentFilename || 'Dados compartilhados').replace(/</g, '\\u003c');
+    const inject = 'window.EMBEDDED_DATA = ' + dataJson + '; window.EMBEDDED_NAME = ' + nomeJson + ';';
+
+    // Monta o marcador em partes para que só exista UMA ocorrência literal
+    // dele no arquivo (a do <head>), garantindo a substituição correta.
+    const MARKER = '/*__EMBEDDED' + '_DATA__*/';
+    const html = PRISTINE_HTML.replace(MARKER, inject);
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const base = (currentFilename || 'analise').replace(/\.csv$/i, '').replace(/[^\w\-]+/g, '_');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Analise_ORH_' + base + '_' + date + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (e) {
+    alert('Erro ao gerar o arquivo: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = txtOrig; btn.disabled = false; }
+  }
+}
+
+// ===== AUTO-CARGA (quando o arquivo tem dados embutidos) =====
+function carregarSeEmbutido() {
+  if (window.EMBEDDED_DATA && Array.isArray(window.EMBEDDED_DATA) && window.EMBEDDED_DATA.length) {
+    rawRows = window.EMBEDDED_DATA;
+    allTipos = [...new Set(rawRows.map(r => r.tipo))].filter(Boolean).sort();
+    currentFilename = window.EMBEDDED_NAME || 'Dados compartilhados';
+    buildDashboard(currentFilename);
+    return true;
+  }
+  return false;
 }
 
 // ===== MULTI SELECT =====
@@ -851,7 +938,7 @@ function buildDashboard(filename) {
 
   const semanas = [...new Set(rawRows.map(r=>r.semana))].filter(s=>s>0).sort((a,b)=>a-b).map(String);
   const contratos = [...new Set(rawRows.map(r=>r.contrato))].filter(c=>!isNaN(c)).sort((a,b)=>a-b).map(String);
-  const allDates = [...new Set(rawRows.map(r=>r.data))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  const allDates = [...new Set(rawRows.map(r=>r.data))].filter(Boolean).sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
   const carriers = [...new Set(rawRows.map(r=>r.carrier))].filter(v=>v&&v!=='–').sort();
   const bases = [...new Set(rawRows.map(r=>r.base))].filter(v=>v&&v!=='–').sort();
   const clusters = [...new Set(rawRows.map(r=>r.cluster))].filter(v=>v&&v!=='–').sort();
@@ -997,7 +1084,7 @@ function renderOrhTab() {
     <div class="kpi ${orhAcima.length/rows.length>=0.5?'red':'orange'}"><label>% acima contrato</label><div class="value">${((orhAcima.length/rows.length)*100).toFixed(1)}%</div><div class="sub">${orhAcima.length} rotas · ${orhAcima.reduce((s,r)=>s+(r.hours-r.contrato),0).toFixed(1)}h excedentes</div></div>`;
 
   // Chart evolução
-  const dates = [...new Set(rows.map(r=>r.data))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const dates = [...new Set(rows.map(r=>r.data))].sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
   const palette = ['#dc2626','#2563eb','#16a34a','#ea580c','#7c3aed','#0891b2','#ca8a04','#db2777','#65a30d','#0f172a','#475569','#b45309'];
   const combos = [...new Set(rows.map(r=>`${r.tipo}|${r.contrato}`))].slice(0,8);
   const datasets = combos.map((combo,i) => {
@@ -1117,7 +1204,7 @@ function renderStemTab() {
     '<div class="kpi orange"><label>Stem Out medio</label><div class="value">' + med + 'h</div><div class="sub">Padrao: < 1h</div></div>';
 
   // Evolution chart
-  const dates = [...new Set(rows.map(r=>r.data))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  const dates = [...new Set(rows.map(r=>r.data))].filter(Boolean).sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
   const evolData = dates.map(d => {
     const dr = rows.filter(r=>r.data===d);
     const f  = dr.filter(r=>r.stem>=1).length;
@@ -1196,7 +1283,7 @@ function _renderStemDriver(rows) {
 }
 
 function _renderStemDia(rows) {
-  const dates = [...new Set(rows.map(r=>r.data))].filter(Boolean).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  const dates = [...new Set(rows.map(r=>r.data))].filter(Boolean).sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
   const tbl = document.getElementById('tbl-stem-dia');
   tbl.innerHTML = dates.map(d => {
     const dr  = rows.filter(r=>r.data===d&&!isNaN(r.stem));
@@ -1649,7 +1736,7 @@ function _renderDpphDia(rows) {
     map[r.data].n++; map[r.data].sumEnt += (r.entregues||0); map[r.data].sumHrs += (r.hours||0);
   });
   const data = Object.values(map).sort((a,b)=>
-    a.data.split('/').reverse().join('').localeCompare(b.data.split('/').reverse().join('')));
+    dateKey(a.data).localeCompare(dateKey(b.data)));
   document.getElementById('tbl-dpph-dia').innerHTML = data.map(d => {
     const med = d.sumHrs>0 ? +(d.sumEnt/d.sumHrs).toFixed(2) : 0;
     return `<tr><td>${d.data}</td><td>${d.semana}</td><td>${d.n}</td>
@@ -1836,7 +1923,7 @@ function renderOrhcTab() {
     <div class="kpi ${total-conformes>0?'red':'green'}"><label>Rotas não conformes</label><div class="value">${(total-conformes).toLocaleString('pt-BR')}</div><div class="sub">${(100-orhcPct).toFixed(1)}% do total</div></div>`;
 
   // Evolução diária
-  const dates = [...new Set(rows.map(r=>r.data))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const dates = [...new Set(rows.map(r=>r.data))].sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
   const evolData = dates.map(d => {
     const dr = rows.filter(r=>r.data===d);
     return +(dr.filter(r=>r.orhc===1).length/dr.length*100).toFixed(1);
@@ -1986,7 +2073,7 @@ function _renderOrhcDriver(rows) {
 }
 
 function _renderOrhcDia(rows) {
-  const dates=[...new Set(rows.map(r=>r.data))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const dates=[...new Set(rows.map(r=>r.data))].sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
   const tbl=document.getElementById('tbl-orhc-dia');
   tbl.innerHTML=dates.map(d=>{
     const dr=rows.filter(r=>r.data===d);
@@ -2097,6 +2184,25 @@ function showTab(id, el) {
   document.getElementById(id).classList.add('active');
   if (el) el.classList.add('active');
 }
+
+// ===== INICIALIZAÇÃO =====
+// Ordem de tentativa:
+//  1) dados embutidos no próprio arquivo (versão baixada/compartilhada);
+//  2) arquivo ./dados.csv publicado junto ao site (visitante vê tudo pronto);
+//  3) tela de upload (estado inicial), caso nenhum dado esteja disponível.
+async function init() {
+  if (carregarSeEmbutido()) return;
+  const up = document.getElementById('upload-screen');
+  up.style.display = 'none';
+  const boot = document.createElement('div');
+  boot.style.cssText = 'min-height:100vh;display:flex;align-items:center;justify-content:center;font-size:0.95rem;color:#64748b;';
+  boot.textContent = 'Carregando dados...';
+  document.body.appendChild(boot);
+  const ok = await tryLoadPublishedCsv();
+  boot.remove();
+  if (!ok) up.style.display = 'flex';
+}
+init();
 </script>
 </body>
 </html>
