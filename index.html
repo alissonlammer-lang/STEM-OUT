@@ -1898,10 +1898,9 @@ function _renderDpphWowDia(rows, allSemRows) {
       </div>`;
   };
 
-  // BLOCO GERAL — só rotas com BASE = "SVC" (SAL1 direto), por carrier
-  const svcRows = src.filter(r => r.base === 'SVC');
-  const carriers = [...new Set(svcRows.map(r=>r.carrier))].filter(v=>v && v!=='–');
-  let geralRows = carriers.map(c => computeRow(c, svcRows.filter(r=>r.carrier===c)))
+  // BLOCO GERAL — SAL1 por carrier, considerando TODAS as bases (como na planilha)
+  const carriers = [...new Set(src.map(r=>r.carrier))].filter(v=>v && v!=='–');
+  let geralRows = carriers.map(c => computeRow(c, src.filter(r=>r.carrier===c)))
     .filter(r => r.cur!==null || r.prev!==null);
   geralRows.sort((a,b) => (a.cur===null) - (b.cur===null) || (a.cur??0) - (b.cur??0));
 
@@ -1929,11 +1928,11 @@ function _renderDpphWowDia(rows, allSemRows) {
   xptRows = xptRows.filter(r => r.cur!==null || r.prev!==null);
   const xptSubset = src.filter(r => XPT_BASES.includes(r.base));
 
-  let html = buildBlock('GERAL — SVC SAL1, por Carrier', 'Carrier', geralRows, svcRows);
+  let html = buildBlock('GERAL — SAL1, por Carrier (todas as bases)', 'Carrier', geralRows, src);
   if (xptRows.length) html += buildBlock('XPT — por Base: Transportador vs Meli Extra', 'Base · Operador', xptRows, xptSubset);
   html += `<p style="color:#64748b;font-size:0.8rem;margin-top:8px">
       DPPH ponderado (DELIVERED ÷ horas), apenas rotas com BASE preenchida. Verde ≥ meta ${DPPH_META}; amarelo/laranja/vermelho conforme fica abaixo dela.
-      Colunas de dia (${dias.map(dm).join(', ') || '—'}) referem-se à semana ${curSem}. GERAL considera apenas BASE = "SVC"; XPT separa, em cada base (EAL1–EAL4, ECE1), o transportador contratado e o Meli Extra.
+      Colunas de dia (${dias.map(dm).join(', ') || '—'}) referem-se à semana ${curSem}. GERAL soma todas as bases por carrier; XPT separa, em cada base (EAL1–EAL4, ECE1), o transportador contratado e o Meli Extra.
     </p>`;
   container.innerHTML = html;
 }
