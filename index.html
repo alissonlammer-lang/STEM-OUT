@@ -353,6 +353,7 @@ tr:hover td { background: #f8fafc; }
       <button class="orhc-dim-btn" onclick="showOrhcDim('dia',this)">Por Dia</button>
       <button class="orhc-dim-btn" onclick="showOrhcDim('rota',this)">Por Rota (ID)</button>
       <button class="orhc-dim-btn" onclick="showOrhcDim('wow',this)">📅 Sem. vs Sem.</button>
+      <button class="orhc-dim-btn" onclick="showOrhcDim('wowdia',this)">📆 Sem × Sem por dia</button>
     </div>
     <div id="stem-dim-wow" class="stem-dim-panel" style="display:none;">
       <div class="full-card">
@@ -447,6 +448,12 @@ tr:hover td { background: #f8fafc; }
         <div class="tbl-wrap" style="max-height:820px;"><table><thead><tr>
           <th>Dia Semana</th><th>Data (Atual)</th><th>Rotas</th><th>Conf.</th><th>ORHC %</th><th>Data (Ant.)</th><th>Rotas</th><th>Conf.</th><th>ORHC %</th><th>Δ pp</th>
         </tr></thead><tbody id="tbl-orhc-wow"></tbody></table></div>
+      </div>
+    </div>
+    <div id="orhc-dim-wowdia" class="orhc-dim-panel" style="display:none;">
+      <div class="full-card">
+        <h3>Semana Atual vs Anterior — por Dia (GERAL e XPT)</h3>
+        <div id="orhc-wowdia-container"></div>
       </div>
     </div>
 </div>
@@ -962,7 +969,7 @@ function buildDashboard(filename) {
   // ORH tabs default to motorized modals with 8h/8.88h contracts
   const orhDefaultTipos = allTipos.filter(t => ORH_TIPOS.includes(t));
 
-  document.getElementById('dash-title').textContent = 'Analise ORH + Stem Out — ' + filename;
+  document.getElementById('dash-title').textContent = 'Analise ORH + Stem Out — ' + filename + '  ·  build v4 (ORHC diag)';
   document.getElementById('dash-subtitle').textContent =
     rawRows.length.toLocaleString('pt-BR') + ' rotas · ' + allTipos.length + ' tipos · Periodo: ' + (allDates[0]||'?') + ' a ' + (allDates[allDates.length-1]||'?');
 
@@ -1679,6 +1686,8 @@ function renderDpphTab() {
   _renderDpphDriver(rows, rowsAllSemsDpph);
   _renderDpphDia(rows);
   window._dpphRotaRows = rows;
+  window._dpphWowRows = rows;
+  window._dpphWowAllSems = rowsAllSemsDpph;
   if (document.getElementById('dpph-dim-rota')?.style.display !== 'none') _renderDpphRota(rows);
   _renderDpphWow(rows, rowsAllSemsDpph);
   _renderDpphWowDia(rows, rowsAllSemsDpph);
@@ -1898,41 +1907,27 @@ function _renderDpphWowDia(rows, allSemRows) {
       </div>`;
   };
 
-  // BLOCO GERAL — SAL1 por carrier, considerando TODAS as bases (como na planilha)
-  const carriers = [...new Set(src.map(r=>r.carrier))].filter(v=>v && v!=='–');
+  // BLOCO GERAL — carriers que operam o SVC (têm ao menos 1 rota em BASE="SVC"),
+  // com o valor somando TODAS as bases do carrier (como na planilha). Carriers
+  // exclusivamente XPT (ex.: 50 Mais) ou fora do SVC (ex.: Agencias Kangu) não entram aqui —
+  // eles aparecem no bloco XPT.
+  const svcCarriers = new Set(src.filter(r => r.base === 'SVC').map(r => r.carrier));
+  const carriers = [...new Set(src.map(r=>r.carrier))].filter(v => v && v!=='–' && svcCarriers.has(v));
   let geralRows = carriers.map(c => computeRow(c, src.filter(r=>r.carrier===c)))
     .filter(r => r.cur!==null || r.prev!==null);
   geralRows.sort((a,b) => (a.cur===null) - (b.cur===null) || (a.cur??0) - (b.cur??0));
 
-  // BLOCO XPT — por BASE cross-point; dentro de cada base, separa
-  // Transportador (carrier contratado) e Meli Extra (Envios Extra).
-  const MELI = 'Envios Extra';
-  let xptRows = [];
-  XPT_BASES.forEach(b => {
-    const baseRows = src.filter(r => r.base === b);
-    if (!baseRows.length) return;
-    const transp = baseRows.filter(r => r.carrier !== MELI);
-    const meli   = baseRows.filter(r => r.carrier === MELI);
-    const tNames = [...new Set(transp.map(r=>r.carrier))].filter(Boolean);
-    if (transp.length) {
-      const row = computeRow(`${b} · ${tNames.join(' + ') || 'Transportador'}`, transp);
-      row.groupStart = true;
-      xptRows.push(row);
-    }
-    if (meli.length) {
-      const row = computeRow(`${b} · Meli Extra`, meli);
-      if (!transp.length) row.groupStart = true;
-      xptRows.push(row);
-    }
-  });
-  xptRows = xptRows.filter(r => r.cur!==null || r.prev!==null);
+  // BLOCO XPT — uma linha por BASE cross-point = total da base (todos os operadores
+  // juntos, transportador + Meli Extra), igual à fórmula da planilha (filtra só por BASE).
+  let xptRows = XPT_BASES.map(b => computeRow(b, src.filter(r => r.base === b)))
+    .filter(r => r.cur!==null || r.prev!==null);
   const xptSubset = src.filter(r => XPT_BASES.includes(r.base));
 
   let html = buildBlock('GERAL — SAL1, por Carrier (todas as bases)', 'Carrier', geralRows, src);
-  if (xptRows.length) html += buildBlock('XPT — por Base: Transportador vs Meli Extra', 'Base · Operador', xptRows, xptSubset);
+  if (xptRows.length) html += buildBlock('XPT — por Base', 'Base', xptRows, xptSubset);
   html += `<p style="color:#64748b;font-size:0.8rem;margin-top:8px">
       DPPH ponderado (DELIVERED ÷ horas), apenas rotas com BASE preenchida. Verde ≥ meta ${DPPH_META}; amarelo/laranja/vermelho conforme fica abaixo dela.
-      Colunas de dia (${dias.map(dm).join(', ') || '—'}) referem-se à semana ${curSem}. GERAL soma todas as bases por carrier; XPT separa, em cada base (EAL1–EAL4, ECE1), o transportador contratado e o Meli Extra.
+      Colunas de dia (${dias.map(dm).join(', ') || '—'}) referem-se à semana ${curSem}. GERAL soma todas as bases por carrier (carriers do SVC); XPT mostra o total de cada base (EAL1–EAL4, ECE1), todos os operadores juntos.
     </p>`;
   container.innerHTML = html;
 }
@@ -1943,6 +1938,7 @@ function showDpphDim(dim, btn) {
   document.getElementById('dpph-dim-'+dim).style.display='block';
   btn.classList.add('active');
   if (dim === 'rota' && window._dpphRotaRows) _renderDpphRota(window._dpphRotaRows);
+  if (dim === 'wowdia' && window._dpphWowRows) _renderDpphWowDia(window._dpphWowRows, window._dpphWowAllSems);
 }
 
 function showStemDim(dim, btn) {
@@ -2048,6 +2044,10 @@ function renderOrhcTab() {
   );
   if (!rows.length) return;
 
+  // guarda cedo para render sob demanda (evita depender do fim da função)
+  window._orhcWowRows = rows;
+  window._orhcWowAllSems = rowsAllSems;
+
   const total = rows.length;
   const conformes = rows.filter(r=>r.orhc===1).length;
   const orhcPct = +(conformes/total*100).toFixed(1);
@@ -2083,6 +2083,7 @@ function renderOrhcTab() {
   if (rotaPanel && rotaPanel.style.display !== 'none') _renderOrhcRota(rows);
   window._orhcWowRows = rows;
   _renderOrhcWow(rows);
+  try { _renderOrhcWowDia(rows, rowsAllSems); } catch(e){ console.error('eager wowdia erro:', e); }
 }
 
 
@@ -2264,13 +2265,139 @@ function _renderOrhcRota(rows) {
   }).join('');
 }
 
+// ===== ORHC: Semana atual vs anterior, por dia (GERAL por carrier do SVC + XPT por base) =====
+function _renderOrhcWowDia(rows, allSemRows) {
+  const container = document.getElementById('orhc-wowdia-container');
+  if (!container) return;
+  const src = allSemRows || rows;
+
+  const curSems = [...new Set(rows.map(r=>r.semana))].sort((a,b)=>a-b);
+  if (!curSems.length) {
+    container.innerHTML = '<p style="color:#64748b;padding:16px">Sem dados para o período/filtros selecionados.</p>';
+    return;
+  }
+  const curSem = curSems[curSems.length-1];
+  const allSems = [...new Set(src.map(r=>r.semana))].sort((a,b)=>a-b);
+  const curIdx = allSems.indexOf(curSem);
+  const prevSem = curIdx > 0 ? allSems[curIdx-1] : null;
+
+  const dias = [...new Set(src.filter(r=>r.semana===curSem).map(r=>r.data))]
+    .filter(Boolean).sort((a,b)=>dateKey(a).localeCompare(dateKey(b)));
+
+  const dm = s => { const m = String(s||'').match(/^(\d{2})\/(\d{2})\/\d{4}$/); return m ? (+m[1])+'/'+(+m[2]) : s; };
+  const pctOf = list => {
+    if (!list || !list.length) return null;
+    return +(list.filter(r=>r.orhc===1).length / list.length * 100).toFixed(1);
+  };
+  const cell = v => {
+    if (v===null || isNaN(v)) return '<td style="text-align:center;color:#cbd5e1">–</td>';
+    const bg = v>=ORHC_META ? '#dcfce7' : v>=75 ? '#fef9c3' : v>=60 ? '#ffedd5' : '#fee2e2';
+    return `<td style="text-align:center;background:${bg};color:${orhcColor(v)};font-weight:700">${v.toFixed(1)}%</td>`;
+  };
+  const wowCell = (prev,cur) => {
+    if (prev===null || cur===null) return '<td style="text-align:center;color:#cbd5e1">–</td>';
+    const d = +(cur-prev).toFixed(1); const up = d>=0;
+    return `<td style="text-align:center;font-weight:700;color:${up?'#16a34a':'#dc2626'}">${up?'▲':'▼'} ${up?'+':''}${d.toFixed(1)}pp</td>`;
+  };
+  const dayHeaders = dias.map(d => `<th style="text-align:center">${dm(d)}</th>`).join('');
+  const prevLabel = prevSem!==null ? ('Sem '+prevSem) : 'Sem ant.';
+
+  const computeRow = (label, subset) => ({
+    label,
+    prev: prevSem!==null ? pctOf(subset.filter(r=>r.semana===prevSem)) : null,
+    cur:  pctOf(subset.filter(r=>r.semana===curSem)),
+    days: dias.map(d => pctOf(subset.filter(r=>r.semana===curSem && r.data===d)))
+  });
+
+  const buildBlock = (titulo, colLabel, dataRows, totalSubset) => {
+    const tot = computeRow('TOTAL', totalSubset);
+    return `
+      <div style="font-weight:700;font-size:0.98rem;color:#0f3460;margin:18px 0 6px">${titulo}</div>
+      <div class="tbl-wrap" style="max-height:820px;">
+        <table>
+          <thead><tr>
+            <th>${colLabel}</th>
+            <th style="text-align:center">${prevLabel}</th>
+            <th style="text-align:center">Sem ${curSem}</th>
+            <th style="text-align:center">WoW</th>
+            ${dayHeaders}
+          </tr></thead>
+          <tbody>
+            ${dataRows.map(r => `<tr>
+              <td><strong>${r.label}</strong></td>
+              ${cell(r.prev)}${cell(r.cur)}${wowCell(r.prev,r.cur)}${r.days.map(cell).join('')}
+            </tr>`).join('')}
+            <tr style="border-top:2px solid #0f3460;background:#f1f5f9">
+              <td><strong>TOTAL</strong></td>
+              ${cell(tot.prev)}${cell(tot.cur)}${wowCell(tot.prev,tot.cur)}${tot.days.map(cell).join('')}
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  };
+
+  // ===== 3 blocos, conforme a planilha de ORHC =====
+  const MELI = 'Envios Extra';
+  const svcCarrierSet = new Set(src.filter(r => r.base === 'SVC').map(r => r.carrier));
+  const svcOrXptSet   = new Set(src.filter(r => r.base === 'SVC' || XPT_BASES.includes(r.base)).map(r => r.carrier));
+
+  // BLOCO 1 — GERAL MLP SVC: carriers que operam SVC ou XPT, valor sobre TODAS as bases
+  const geralCarriers = [...new Set(src.map(r=>r.carrier))].filter(v => v && v!=='–' && svcOrXptSet.has(v));
+  let geralRows = geralCarriers.map(c => computeRow(c, src.filter(r=>r.carrier===c)))
+    .filter(r => r.cur!==null || r.prev!==null);
+  geralRows.sort((a,b) => (a.cur===null) - (b.cur===null) || (a.cur??0) - (b.cur??0));
+  const geralSubset = src.filter(r => svcOrXptSet.has(r.carrier));
+
+  // BLOCO 2 — MLP SVC: carriers com rota no SVC, valor SÓ na base SVC
+  const svcRows = src.filter(r => r.base === 'SVC');
+  const svcCarriers = [...new Set(svcRows.map(r=>r.carrier))].filter(v => v && v!=='–');
+  let svcOnlyRows = svcCarriers.map(c => computeRow(c, svcRows.filter(r=>r.carrier===c)))
+    .filter(r => r.cur!==null || r.prev!==null);
+  svcOnlyRows.sort((a,b) => (a.cur===null) - (b.cur===null) || (a.cur??0) - (b.cur??0));
+
+  // BLOCO 3 — XPT SEM EXTRA: por base, só o transportador contratado (exclui Meli Extra)
+  let xptRows = XPT_BASES.map(b => {
+    const t = src.filter(r => r.base === b && r.carrier !== MELI);
+    const tn = [...new Set(t.map(r=>r.carrier))].filter(Boolean).join(' + ') || 'Transportador';
+    return computeRow(`${b} · ${tn}`, t);
+  }).filter(r => r.cur!==null || r.prev!==null);
+  const xptSubset = src.filter(r => XPT_BASES.includes(r.base) && r.carrier !== MELI);
+
+  let html  = buildBlock('GERAL MLP SVC — por Carrier (todas as bases)', 'Carrier', geralRows, geralSubset);
+      html += buildBlock('MLP SVC — por Carrier (só base SVC)', 'Carrier', svcOnlyRows, svcRows);
+  if (xptRows.length) html += buildBlock('XPT · SEM EXTRA — por Base (só transportador)', 'Base · Transportador', xptRows, xptSubset);
+  html += `<p style="color:#64748b;font-size:0.8rem;margin-top:8px">
+      ORHC % = rotas conformes (ORHC=1) ÷ total, apenas rotas com BASE preenchida. Verde ≥ meta ${ORHC_META}%; amarelo/laranja/vermelho conforme fica abaixo.
+      Colunas de dia (${dias.map(dm).join(', ') || '—'}) referem-se à semana ${curSem}.
+      <b>GERAL MLP SVC</b>: por carrier, todas as bases. <b>MLP SVC</b>: por carrier, só a base SVC. <b>XPT · SEM EXTRA</b>: por base, só o transportador (sem o Meli Extra).
+    </p>`;
+  container.innerHTML = html;
+}
+
 function showOrhcDim(dim, btn) {
-  document.querySelectorAll('.orhc-dim-panel').forEach(p=>p.style.display='none');
-  document.querySelectorAll('.orhc-dim-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('orhc-dim-'+dim).style.display='block';
-  btn.classList.add('active');
-  if (dim === 'rota' && window._orhcRotaRows) _renderOrhcRota(window._orhcRotaRows);
-  if (dim === 'wow'  && window._orhcWowRows)  _renderOrhcWow(window._orhcWowRows);
+  try {
+    document.querySelectorAll('.orhc-dim-panel').forEach(p=>p.style.display='none');
+    document.querySelectorAll('.orhc-dim-btn').forEach(b=>b.classList.remove('active'));
+    var panel = document.getElementById('orhc-dim-'+dim);
+    if (panel) { panel.style.display='block'; }
+    if (btn && btn.classList) btn.classList.add('active');
+    if (dim === 'rota' && window._orhcRotaRows) _renderOrhcRota(window._orhcRotaRows);
+    if (dim === 'wow'  && window._orhcWowRows)  _renderOrhcWow(window._orhcWowRows);
+    if (dim === 'wowdia') {
+      var cont = document.getElementById('orhc-wowdia-container');
+      if (!panel) { if (cont) {} else { alert('Painel orhc-dim-wowdia não encontrado no HTML'); } }
+      try {
+        _renderOrhcWowDia(window._orhcWowRows || rawRows, window._orhcWowAllSems || rawRows);
+      } catch(err) {
+        if (cont) cont.innerHTML = '<p style="color:#dc2626;padding:16px;font-weight:600">Erro ao montar o painel Sem×Sem: ' + (err && err.message ? err.message : err) + '</p>';
+        console.error('Erro _renderOrhcWowDia:', err);
+      }
+    }
+  } catch(e) {
+    console.error('showOrhcDim erro geral:', e);
+    var c2 = document.getElementById('orhc-wowdia-container');
+    if (c2 && dim === 'wowdia') c2.innerHTML = '<p style="color:#dc2626;padding:16px;font-weight:600">Erro em showOrhcDim: ' + (e && e.message ? e.message : e) + '</p>';
+  }
 }
 
 
