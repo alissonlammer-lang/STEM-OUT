@@ -485,12 +485,12 @@ table.detail tr:hover td { background: var(--surface-1); }
   <div class="main-content">
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="summary-table-card" style="margin-bottom:16px">
-      <div class="table-header">Detalhamento por grupo — SVC × XPT</div>
+      <div class="table-header">Detalhamento por grupo</div>
       <div style="overflow-x:auto">
         <table class="summary" id="grupoOverviewTable">
           <thead><tr>
             <th>Grupo</th><th>Rotas</th><th>Despachados</th><th>Entregues</th><th>Insucessos</th>
-            <th>DS</th><th>ORHC</th><th>DPPH</th><th>CR %</th>
+            <th>DS</th><th>ORHC</th><th>DPPH</th><th>Não Vis. %</th><th>CR %</th>
           </tr></thead>
           <tbody id="grupoOverviewBody"></tbody>
         </table>
@@ -1210,7 +1210,8 @@ function calcKPIs(data) {
   const unvisitedPct     = totalPacotes > 0 ? (totalUnvisited / totalPacotes) * 100 : 0;
   const totalClaims      = COL.ID_COM_RECLAMO ? data.filter(r => (r[COL.ID_COM_RECLAMO]||'').trim() !== '').length : 0;
   const crPct            = totalDespachados > 0 ? (totalClaims / totalDespachados) * 100 : 0;
-  return { totalDespachados, totalEntregues, insucessos, ds, totalRotas, rotasZero, orhc, dpph, totalUnvisited, totalPacotes, unvisitedPct, totalClaims, crPct };
+  const orhcNum          = orhcRows.filter(r => n(r[COL.ORHC]) === 1).length;
+  return { totalDespachados, totalEntregues, insucessos, ds, totalRotas, rotasZero, orhc, orhcNum, orhcDenom: orhcRows.length, dpph, dpphCount: dpphVals.length, totalUnvisited, totalPacotes, unvisitedPct, totalClaims, crPct };
 }
 
 /* ── KPI Cards ── */
@@ -1424,40 +1425,54 @@ function renderTable(filtered) {
   });
 }
 
-function renderGrupoOverview(filtered) {
-  const body = document.getElementById('grupoOverviewBody');
+function renderGrupoOverview(filtered, bodyId, metric) {
+  const body = document.getElementById(bodyId || 'grupoOverviewBody');
   if (!body) return;
   const grupos = [
-    { key:'SVC', label:'🟦 SVC (SAL1)' },
-    { key:'XPT', label:'🟨 XPT (EAL1–EAL4, ECE1)' },
+    { key:'SVC' }, { key:'XPT' }, { key:'DC' }, { key:'NEX' },
   ];
+  const nodeCol = rawData.length ? Object.keys(rawData[0])[0] : null; // coluna A = base geral (SC): SAL1/SSE1…
+  const grupoLabel = (key, rows) => {
+    if (key === 'SVC') {
+      const scs = nodeCol ? [...new Set(rows.map(r => (r[nodeCol]||'').trim()).filter(Boolean))].sort() : [];
+      return `🟦 SVC (${scs.join(', ') || 'SVC'})`;
+    }
+    if (key === 'XPT') return '🟨 XPT';
+    if (key === 'DC')  return '🟩 DC (Agências Kangu)';
+    return '🟥 NEX (Extras)';
+  };
   const pillDS   = v => `<span class="pill ${v>=98.5?'good':'bad'}">${v.toFixed(2)}%</span>`;
   const pillORHC = v => `<span class="pill ${v>=85?'good':'bad'}">${v.toFixed(2)}%</span>`;
   const pillDPPH = v => `<span class="pill ${v>=12.1?'good':'bad'}">${v.toFixed(2)}</span>`;
   const pillCR   = v => `<span class="pill ${v<0.14?'good':'bad'}">${v.toFixed(2)}%</span>`;
+  const cfg = metric ? GRUPO_METRICS[metric] : null;
+  const cellsFor = k => cfg ? cfg.cell(k) : `
+      <td>${k.totalRotas.toLocaleString('pt-BR')}</td>
+      <td>${k.totalDespachados.toLocaleString('pt-BR')}</td>
+      <td>${k.totalEntregues.toLocaleString('pt-BR')}</td>
+      <td>${Math.max(0,k.totalDespachados-k.totalEntregues).toLocaleString('pt-BR')}</td>
+      <td>${pillDS(k.ds)}</td>
+      <td>${pillORHC(k.orhc)}</td>
+      <td>${pillDPPH(k.dpph)}</td>
+      <td>${k.unvisitedPct.toFixed(2)}%</td>
+      <td>${pillCR(k.crPct)}</td>`;
   body.innerHTML = '';
   grupos.forEach(g => {
     const rows = filtered.filter(r => extratoGrupo((r[COL.BASE]||'').trim()) === g.key);
+    if (!rows.length) return;
+    const label = grupoLabel(g.key, rows);
     const k = calcKPIs(rows);
     const ins = Math.max(0, k.totalDespachados - k.totalEntregues);
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
     tr.title = 'Clique para ver as transportadoras deste grupo';
     tr.innerHTML = `
-      <td><strong><span class="grupo-caret" style="display:inline-block;width:14px;color:var(--text-muted)">▶</span>${g.label}</strong></td>
-      <td>${k.totalRotas.toLocaleString('pt-BR')}</td>
-      <td>${k.totalDespachados.toLocaleString('pt-BR')}</td>
-      <td>${k.totalEntregues.toLocaleString('pt-BR')}</td>
-      <td>${ins.toLocaleString('pt-BR')}</td>
-      <td>${pillDS(k.ds)}</td>
-      <td>${pillORHC(k.orhc)}</td>
-      <td>${pillDPPH(k.dpph)}</td>
-      <td>${pillCR(k.crPct)}</td>`;
+      <td><strong><span class="grupo-caret" style="display:inline-block;width:14px;color:var(--text-muted)">▶</span>${label}</strong></td>${cellsFor(k)}`;
     body.appendChild(tr);
 
-    // sub-linhas: SVC = por transportadora | XPT = por transportadora × base (ordenado por base)
+    // sub-linhas: SVC = por transportadora | XPT/DC/NEX = por base × transportadora
     let subDefs = [];
-    if (g.key === 'XPT') {
+    if (g.key !== 'SVC') {
       const combo = {};
       rows.forEach(r => {
         const base = (r[COL.BASE]||'—').trim().toUpperCase();
@@ -1466,12 +1481,14 @@ function renderGrupoOverview(filtered) {
         (combo[key] = combo[key] || { base, car, rows:[] }).rows.push(r);
       });
       subDefs = Object.values(combo).map(x => ({
-        label: `${x.car} — ${x.base}`, base: x.base, rows: x.rows,
+        label: `${x.base} — ${x.car}`, base: x.base, rows: x.rows,
         desp: x.rows.reduce((s,r)=>s+n(r[COL.DESPACHADOS]),0)
       })).sort((a,b) => {
         const ia = EXTRATO_XPT_BASES.indexOf(a.base), ib = EXTRATO_XPT_BASES.indexOf(b.base);
-        const ra = ia < 0 ? 99 : ia, rb = ib < 0 ? 99 : ib;
-        return ra !== rb ? ra - rb : b.desp - a.desp;   // por base, depois despachados desc
+        const ra = ia < 0 ? 999 : ia, rb = ib < 0 ? 999 : ib;
+        if (ra !== rb) return ra - rb;                              // bases conhecidas na ordem definida
+        if (a.base !== b.base) return a.base.localeCompare(b.base); // demais bases em ordem alfabética
+        return b.desp - a.desp;                                     // dentro da base, despachados desc
       });
     } else {
       const byCar = {};
@@ -1488,15 +1505,7 @@ function renderGrupoOverview(filtered) {
       sub.style.display = 'none';
       sub.style.background = 'var(--surface-1)';
       sub.innerHTML = `
-        <td style="padding-left:30px;color:var(--text-secondary)">${sd.label}</td>
-        <td>${ck.totalRotas.toLocaleString('pt-BR')}</td>
-        <td>${ck.totalDespachados.toLocaleString('pt-BR')}</td>
-        <td>${ck.totalEntregues.toLocaleString('pt-BR')}</td>
-        <td>${cins.toLocaleString('pt-BR')}</td>
-        <td>${pillDS(ck.ds)}</td>
-        <td>${pillORHC(ck.orhc)}</td>
-        <td>${pillDPPH(ck.dpph)}</td>
-        <td>${pillCR(ck.crPct)}</td>`;
+        <td style="padding-left:30px;color:var(--text-secondary)">${sd.label}</td>${cellsFor(ck)}`;
       body.appendChild(sub);
     });
 
@@ -1508,6 +1517,101 @@ function renderGrupoOverview(filtered) {
       if (caret) caret.textContent = open ? '▶' : '▼';
     });
   });
+}
+
+// Detalhamento por grupo específico de cada aba (colunas pela métrica da aba)
+function gapCell(gap, unit) {
+  const c = gap >= 0 ? 'var(--success-text)' : 'var(--danger-text)';
+  return `<td style="color:${c};font-weight:600">${gap>=0?'+':''}${gap.toFixed(2)}${unit}</td>`;
+}
+function statusCell(ok, palavraFora) { return `<td>${ok ? '✅ OK' : '🔴 ' + palavraFora}</td>`; }
+const GRUPO_METRICS = {
+  DS: {
+    headers: ['Despachados','Entregues','DS %','Gap meta (98,5%)','Status'],
+    cell: k => {
+      const ok = k.ds >= 98.5;
+      return `<td>${k.totalDespachados.toLocaleString('pt-BR')}</td>`
+        + `<td>${k.totalEntregues.toLocaleString('pt-BR')}</td>`
+        + `<td><span class="pill ${ok?'good':'bad'}">${k.ds.toFixed(2)}%</span></td>`
+        + gapCell(k.ds - 98.5, ' pp') + statusCell(ok, 'Abaixo');
+    }
+  },
+  DSINS: {
+    headers: ['Despachados','Insucessos','Insucesso %','Gap meta (1,5%)','Status'],
+    cell: k => {
+      const ins = Math.max(0, k.insucessos);
+      const insPct = k.totalDespachados > 0 ? ins / k.totalDespachados * 100 : 0;
+      const ok = insPct <= 1.5;
+      return `<td>${k.totalDespachados.toLocaleString('pt-BR')}</td>`
+        + `<td>${ins.toLocaleString('pt-BR')}</td>`
+        + `<td><span class="pill ${ok?'good':'bad'}">${insPct.toFixed(2)}%</span></td>`
+        + gapCell(1.5 - insPct, ' pp') + statusCell(ok, 'Acima');
+    }
+  },
+  ORHC: {
+    headers: ['Rotas c/ ORHC','ORHC = 1','ORHC %','Gap meta (85%)','Status'],
+    cell: k => {
+      const ok = k.orhc >= 85;
+      return `<td>${k.orhcDenom.toLocaleString('pt-BR')}</td>`
+        + `<td>${k.orhcNum.toLocaleString('pt-BR')}</td>`
+        + `<td><span class="pill ${ok?'good':'bad'}">${k.orhc.toFixed(2)}%</span></td>`
+        + gapCell(k.orhc - 85, ' pp') + statusCell(ok, 'Abaixo');
+    }
+  },
+  DPPH: {
+    headers: ['Rotas c/ DPPH','DPPH (média)','Gap meta (12,10)','Status'],
+    cell: k => {
+      const ok = k.dpph >= 12.10;
+      return `<td>${k.dpphCount.toLocaleString('pt-BR')}</td>`
+        + `<td><span class="pill ${ok?'good':'bad'}">${k.dpph.toFixed(2)}</span></td>`
+        + gapCell(k.dpph - 12.10, '') + statusCell(ok, 'Abaixo');
+    }
+  },
+  UNVIS: {
+    headers: ['Planejados','Não visitados','Não Vis. %','Gap meta (0,60%)','Status'],
+    cell: k => {
+      const ok = k.unvisitedPct < 0.60;
+      return `<td>${k.totalPacotes.toLocaleString('pt-BR')}</td>`
+        + `<td>${k.totalUnvisited.toLocaleString('pt-BR')}</td>`
+        + `<td><span class="pill ${ok?'good':'bad'}">${k.unvisitedPct.toFixed(2)}%</span></td>`
+        + gapCell(0.60 - k.unvisitedPct, ' pp') + statusCell(ok, 'Acima');
+    }
+  },
+  CR: {
+    headers: ['Despachados','Reclamos','CR %','Gap meta (0,14%)','Status'],
+    cell: k => {
+      const ok = k.crPct < 0.14;
+      return `<td>${k.totalDespachados.toLocaleString('pt-BR')}</td>`
+        + `<td>${k.totalClaims.toLocaleString('pt-BR')}</td>`
+        + `<td><span class="pill ${ok?'good':'bad'}">${k.crPct.toFixed(2)}%</span></td>`
+        + gapCell(0.14 - k.crPct, ' pp') + statusCell(ok, 'Acima');
+    }
+  }
+};
+// aba (sufixo do id) → chave da métrica
+const TAB_METRIC = { DS:'DS', DSIns:'DSINS', ORHC:'ORHC', DPPH:'DPPH', Unvisited:'UNVIS', CR:'CR' };
+const GRUPO_TABS = Object.keys(TAB_METRIC);
+function ensureGrupoCards() {
+  GRUPO_TABS.forEach(t => {
+    const bodyId = 'grupoBody_' + t;
+    if (document.getElementById(bodyId)) return;              // já injetado
+    const dc = document.querySelector('#tab' + t + ' .detail-content');
+    if (!dc) return;
+    const cfg = GRUPO_METRICS[TAB_METRIC[t]];
+    const ths = '<th>Grupo</th>' + cfg.headers.map(h => `<th>${h}</th>`).join('');
+    const card = document.createElement('div');
+    card.className = 'summary-table-card';
+    card.style.marginBottom = '16px';
+    card.innerHTML =
+      '<div class="table-header">Detalhamento por grupo</div>' +
+      '<div style="overflow-x:auto"><table class="summary"><thead><tr>' + ths + '</tr></thead>' +
+      '<tbody id="' + bodyId + '"></tbody></table></div>';
+    dc.insertBefore(card, dc.firstChild);
+  });
+}
+function renderGrupoCards(filtered) {
+  ensureGrupoCards();
+  GRUPO_TABS.forEach(t => renderGrupoOverview(filtered, 'grupoBody_' + t, TAB_METRIC[t]));
 }
 
 function renderStats(filtered) {
@@ -1525,6 +1629,7 @@ function update() {
   renderStats(f);
   renderKPIs(calcKPIs(f));
   renderGrupoOverview(f);
+  renderGrupoCards(f);
   renderCharts(f);
   renderTable(f);
   renderPivotTable();
@@ -3458,10 +3563,11 @@ const EXTRATO_XPT_BASES = ['EAL1','EAL2','EAL3','EAL4','ECE1'];
 const EXTRATO_LAG_DAYS = 3;
 function extratoGrupo(base) {
   const b = (base||'').trim().toUpperCase();
+  if (!b) return null;
   if (b === 'SVC' || b === 'SAL1') return 'SVC';
-  if (EXTRATO_XPT_BASES.includes(b)) return 'XPT';
-  if (b.startsWith('BRNAL')) return 'NEX';
-  return null;
+  if (b.startsWith('BRD')) return 'DC';   // bases BRD = Agências Kangu
+  if (b.startsWith('BRN')) return 'NEX';  // bases BRN = extras
+  return 'XPT'; // qualquer outra base (EAL*, ECE* e demais) = XPT
 }
 // Data que define o "dia" do reclamo: a data de CONCLUSÃO da rota (2ª coluna de data),
 // que nas rotas D+1 difere da data de despacho. Detecta sozinha; cai em COL.DATA se não achar.
@@ -3524,12 +3630,12 @@ function gerarResumoDiarioCR() {
   const isClaim = r => COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim() !== '';
 
   const dayRows = filtered.filter(r => (r[DCOL]||'').trim() === targetDate);
-  const groups = { SVC: { desp:0, claims:0, bases:{} }, XPT: { desp:0, claims:0, bases:{} }, NEX: { desp:0, claims:0, bases:{} } };
+  const groups = { SVC: { desp:0, claims:0, bases:{} }, XPT: { desp:0, claims:0, bases:{} }, DC: { desp:0, claims:0, bases:{} }, NEX: { desp:0, claims:0, bases:{} } };
   dayRows.forEach(r => {
     const base = (r[COL.BASE]||'').trim();
     const g = extratoGrupo(base);
-    if (!g) return;
-    const G = groups[g];
+    const G = g && groups[g];
+    if (!G) return;
     const desp = n(r[COL.DESPACHADOS]);
     const cl = isClaim(r) ? 1 : 0;
     G.desp += desp; G.claims += cl;
@@ -3567,10 +3673,12 @@ function gerarResumoDiarioCR() {
   };
   renderGrupo('SVC', '🟦', 'SVC');
   renderGrupo('XPT', '🟨', 'XPT');
-  if (groups.NEX.claims > 0 || groups.NEX.desp > 0) {
-    renderGrupo('NEX', '🟥', 'NEX — Extras (BRNAL)');
+  const extrasClaims = groups.DC.claims + groups.NEX.claims;
+  if (groups.DC.claims > 0 || groups.DC.desp > 0)   renderGrupo('DC', '🟩', 'DC — Agências Kangu');
+  if (groups.NEX.claims > 0 || groups.NEX.desp > 0) renderGrupo('NEX', '🟥', 'NEX — Extras (BRN)');
+  if (extrasClaims > 0) {
     lines.push(SEP);
-    lines.push(`Σ Total com extras: ${totClaims + groups.NEX.claims} reclamos`);
+    lines.push(`Σ Total com extras: ${totClaims + extrasClaims} reclamos`);
   }
   document.getElementById('waText').textContent = lines.join('\n');
   document.getElementById('waBackdrop').classList.add('open');
