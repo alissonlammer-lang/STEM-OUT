@@ -484,6 +484,18 @@ table.detail tr:hover td { background: var(--surface-1); }
   <div id="tabGeral" class="tab-section active">
   <div class="main-content">
     <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="summary-table-card" style="margin-bottom:16px">
+      <div class="table-header">Detalhamento por grupo — SVC × XPT</div>
+      <div style="overflow-x:auto">
+        <table class="summary" id="grupoOverviewTable">
+          <thead><tr>
+            <th>Grupo</th><th>Rotas</th><th>Despachados</th><th>Entregues</th><th>Insucessos</th>
+            <th>DS</th><th>ORHC</th><th>DPPH</th><th>CR %</th>
+          </tr></thead>
+          <tbody id="grupoOverviewBody"></tbody>
+        </table>
+      </div>
+    </div>
     <div class="charts-grid" id="chartsGrid"></div>
 
     <!-- PAINEL PIVOT (referência estilo tableau) -->
@@ -1205,10 +1217,22 @@ function calcKPIs(data) {
 function renderKPIs(kpi) {
   const grid = document.getElementById('kpiGrid');
   grid.innerHTML = '';
+  let prevCmp = null;
+  try { prevCmp = calcPrevWeekKPIs(getFiltered()); } catch (e) {}
+  const mkDelta = (curV, prevV, higherBetter) => {
+    if (!prevCmp || prevV == null) return '';
+    const dd = curV - prevV;
+    const flat = Math.abs(dd) < 0.005;
+    const improved = higherBetter ? dd > 0 : dd < 0;
+    const arrow = flat ? '➖' : (dd > 0 ? '▲' : '▼');
+    const color = flat ? 'var(--text-muted)' : (improved ? 'var(--success)' : 'var(--danger)');
+    const sign = dd > 0 ? '+' : '';
+    return `<div class="kpi-delta" style="font-size:11px;margin-top:3px"><span style="color:${color};font-weight:700">${arrow} ${sign}${dd.toFixed(2).replace('.',',')} pp</span> <span style="color:var(--text-muted)">vs sem. ${prevCmp.week} (${prevV.toFixed(2).replace('.',',')}%)</span></div>`;
+  };
   const defs = [
-    { id:'ds',        label:'DS',        title:'Delivery Success',   value: kpi.ds.toFixed(2)+'%',           cls: kpi.ds>=98.5?'good':'bad',         badge: kpi.ds>=98.5?'✓ Meta atingida':'✗ Abaixo da meta',  target:'Meta: ≥ 98,5%',  sub:`${kpi.totalEntregues.toLocaleString('pt-BR')} entregues de ${kpi.totalDespachados.toLocaleString('pt-BR')}` },
-    { id:'orhc',      label:'ORHC',      title:'Rotas com Entrega',  value: kpi.orhc.toFixed(2)+'%',         cls: kpi.orhc>=85?'good':'bad',         badge: kpi.orhc>=85?'✓ Meta atingida':'✗ Abaixo da meta',  target:'Meta: ≥ 85%',    sub:`${kpi.totalRotas.toLocaleString('pt-BR')} rotas no total` },
-    { id:'cr',        label:'CR',        title:'Taxa de Reclamações',value: kpi.crPct.toFixed(2)+'%',        cls: kpi.crPct<0.14?'good':'bad',       badge: kpi.crPct<0.14?'✓ Meta atingida':'✗ Acima da meta', target:'Meta: < 0,14%',  sub:`${kpi.totalClaims.toLocaleString('pt-BR')} IDs com reclamo de ${kpi.totalDespachados.toLocaleString('pt-BR')} despachados` },
+    { id:'ds',        label:'DS',        title:'Delivery Success',   value: kpi.ds.toFixed(2)+'%',           cls: kpi.ds>=98.5?'good':'bad',         badge: kpi.ds>=98.5?'✓ Meta atingida':'✗ Abaixo da meta',  target:'Meta: ≥ 98,5%',  sub:`${kpi.totalEntregues.toLocaleString('pt-BR')} entregues de ${kpi.totalDespachados.toLocaleString('pt-BR')}`, delta: mkDelta(kpi.ds, prevCmp && prevCmp.kpi.ds, true) },
+    { id:'orhc',      label:'ORHC',      title:'Rotas com Entrega',  value: kpi.orhc.toFixed(2)+'%',         cls: kpi.orhc>=85?'good':'bad',         badge: kpi.orhc>=85?'✓ Meta atingida':'✗ Abaixo da meta',  target:'Meta: ≥ 85%',    sub:`${kpi.totalRotas.toLocaleString('pt-BR')} rotas no total`, delta: mkDelta(kpi.orhc, prevCmp && prevCmp.kpi.orhc, true) },
+    { id:'cr',        label:'CR',        title:'Taxa de Reclamações',value: kpi.crPct.toFixed(2)+'%',        cls: kpi.crPct<0.14?'good':'bad',       badge: kpi.crPct<0.14?'✓ Meta atingida':'✗ Acima da meta', target:'Meta: < 0,14%',  sub:`${kpi.totalClaims.toLocaleString('pt-BR')} IDs com reclamo de ${kpi.totalDespachados.toLocaleString('pt-BR')} despachados`, delta: mkDelta(kpi.crPct, prevCmp && prevCmp.kpi.crPct, false) },
   ];
   const statDefs = [
     { icon:'🗺', label:'Rotas',       value: kpi.totalRotas.toLocaleString('pt-BR'),         sub:'total de rotas no período' },
@@ -1225,6 +1249,7 @@ function renderKPIs(kpi) {
       <div class="kpi-label">${d.label}</div>
       <div class="kpi-value ${d.cls}">${d.value}</div>
       <div class="kpi-sub">${d.sub}</div>
+      ${d.delta||''}
       <div class="kpi-meta">
         <span class="kpi-badge ${d.cls}">${d.badge}</span>
         <span class="kpi-target">${d.target}</span>
@@ -1356,7 +1381,7 @@ function barOpts(tickFmt, yMin, yMax, meta) {
       datalabels:{
         anchor:'end', align:'end',
         formatter: v => tickFmt(v),
-        color: '#52514e',
+        color: '#2a2926',
         font:{ size:8, weight:'600' },
         offset: 2,
         clip: false,
@@ -1364,8 +1389,8 @@ function barOpts(tickFmt, yMin, yMax, meta) {
     },
     layout:{ padding:{ top: 24, left: 4, right: 4 } },
     scales:{
-      y:{ min:yMin, max:yMax||undefined, ticks:{callback:tickFmt, color:'#898781', font:{size:10}}, grid:{color:'rgba(128,128,128,0.12)'} },
-      x:{ ticks:{color:'#898781', font:{size:8}, maxRotation:50, minRotation:45, autoSkip:false}, grid:{display:false} }
+      y:{ min:yMin, max:yMax||undefined, ticks:{callback:tickFmt, color:'#45433f', font:{size:10}}, grid:{color:'rgba(128,128,128,0.12)'} },
+      x:{ ticks:{color:'#45433f', font:{size:8}, maxRotation:50, minRotation:45, autoSkip:false}, grid:{display:false} }
     }
   };
 }
@@ -1399,6 +1424,92 @@ function renderTable(filtered) {
   });
 }
 
+function renderGrupoOverview(filtered) {
+  const body = document.getElementById('grupoOverviewBody');
+  if (!body) return;
+  const grupos = [
+    { key:'SVC', label:'🟦 SVC (SAL1)' },
+    { key:'XPT', label:'🟨 XPT (EAL1–EAL4, ECE1)' },
+  ];
+  const pillDS   = v => `<span class="pill ${v>=98.5?'good':'bad'}">${v.toFixed(2)}%</span>`;
+  const pillORHC = v => `<span class="pill ${v>=85?'good':'bad'}">${v.toFixed(2)}%</span>`;
+  const pillDPPH = v => `<span class="pill ${v>=12.1?'good':'bad'}">${v.toFixed(2)}</span>`;
+  const pillCR   = v => `<span class="pill ${v<0.14?'good':'bad'}">${v.toFixed(2)}%</span>`;
+  body.innerHTML = '';
+  grupos.forEach(g => {
+    const rows = filtered.filter(r => extratoGrupo((r[COL.BASE]||'').trim()) === g.key);
+    const k = calcKPIs(rows);
+    const ins = Math.max(0, k.totalDespachados - k.totalEntregues);
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    tr.title = 'Clique para ver as transportadoras deste grupo';
+    tr.innerHTML = `
+      <td><strong><span class="grupo-caret" style="display:inline-block;width:14px;color:var(--text-muted)">▶</span>${g.label}</strong></td>
+      <td>${k.totalRotas.toLocaleString('pt-BR')}</td>
+      <td>${k.totalDespachados.toLocaleString('pt-BR')}</td>
+      <td>${k.totalEntregues.toLocaleString('pt-BR')}</td>
+      <td>${ins.toLocaleString('pt-BR')}</td>
+      <td>${pillDS(k.ds)}</td>
+      <td>${pillORHC(k.orhc)}</td>
+      <td>${pillDPPH(k.dpph)}</td>
+      <td>${pillCR(k.crPct)}</td>`;
+    body.appendChild(tr);
+
+    // sub-linhas: SVC = por transportadora | XPT = por transportadora × base (ordenado por base)
+    let subDefs = [];
+    if (g.key === 'XPT') {
+      const combo = {};
+      rows.forEach(r => {
+        const base = (r[COL.BASE]||'—').trim().toUpperCase();
+        const car  = (r[COL.CARRIER]||'—').trim() || '—';
+        const key  = base + '||' + car;
+        (combo[key] = combo[key] || { base, car, rows:[] }).rows.push(r);
+      });
+      subDefs = Object.values(combo).map(x => ({
+        label: `${x.car} — ${x.base}`, base: x.base, rows: x.rows,
+        desp: x.rows.reduce((s,r)=>s+n(r[COL.DESPACHADOS]),0)
+      })).sort((a,b) => {
+        const ia = EXTRATO_XPT_BASES.indexOf(a.base), ib = EXTRATO_XPT_BASES.indexOf(b.base);
+        const ra = ia < 0 ? 99 : ia, rb = ib < 0 ? 99 : ib;
+        return ra !== rb ? ra - rb : b.desp - a.desp;   // por base, depois despachados desc
+      });
+    } else {
+      const byCar = {};
+      rows.forEach(r => { const c = (r[COL.CARRIER]||'—').trim() || '—'; (byCar[c] = byCar[c] || []).push(r); });
+      subDefs = Object.entries(byCar).map(([c, rs]) => ({
+        label: c, rows: rs, desp: rs.reduce((s,r)=>s+n(r[COL.DESPACHADOS]),0)
+      })).sort((a,b) => b.desp - a.desp);
+    }
+    subDefs.forEach(sd => {
+      const ck = calcKPIs(sd.rows);
+      const cins = Math.max(0, ck.totalDespachados - ck.totalEntregues);
+      const sub = document.createElement('tr');
+      sub.className = `grupo-sub-${g.key}`;
+      sub.style.display = 'none';
+      sub.style.background = 'var(--surface-1)';
+      sub.innerHTML = `
+        <td style="padding-left:30px;color:var(--text-secondary)">${sd.label}</td>
+        <td>${ck.totalRotas.toLocaleString('pt-BR')}</td>
+        <td>${ck.totalDespachados.toLocaleString('pt-BR')}</td>
+        <td>${ck.totalEntregues.toLocaleString('pt-BR')}</td>
+        <td>${cins.toLocaleString('pt-BR')}</td>
+        <td>${pillDS(ck.ds)}</td>
+        <td>${pillORHC(ck.orhc)}</td>
+        <td>${pillDPPH(ck.dpph)}</td>
+        <td>${pillCR(ck.crPct)}</td>`;
+      body.appendChild(sub);
+    });
+
+    tr.addEventListener('click', () => {
+      const subs = body.querySelectorAll(`.grupo-sub-${g.key}`);
+      const caret = tr.querySelector('.grupo-caret');
+      const open = subs.length > 0 && subs[0].style.display !== 'none';
+      subs.forEach(s => { s.style.display = open ? 'none' : ''; });
+      if (caret) caret.textContent = open ? '▶' : '▼';
+    });
+  });
+}
+
 function renderStats(filtered) {
   const kpi = calcKPIs(filtered);
   document.getElementById('statsRow').innerHTML = `
@@ -1413,6 +1524,7 @@ function update() {
   const f = getFiltered();
   renderStats(f);
   renderKPIs(calcKPIs(f));
+  renderGrupoOverview(f);
   renderCharts(f);
   renderTable(f);
   renderPivotTable();
@@ -1500,7 +1612,7 @@ function renderDetailDobra() {
     data:{ labels: carriers.slice(0,15), datasets:[{ label:'Rotas >12h', data: carriers.slice(0,15).map(c=>byC[c].orh12), backgroundColor: carriers.slice(0,15).map(c=>byC[c].orh12>0?'#d03b3b':'#0ca30c'), borderRadius:4, borderSkipped:false }]},
     options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
       plugins:{ legend:{display:false},
-        datalabels:{ anchor:'end', align:'end', formatter:v=>v>0?v.toLocaleString('pt-BR'):'', font:{size:8,weight:'600'}, color:'#52514e', offset:3, clip:false }
+        datalabels:{ anchor:'end', align:'end', formatter:v=>v>0?v.toLocaleString('pt-BR'):'', font:{size:8,weight:'600'}, color:'#2a2926', offset:3, clip:false }
       },
       layout:{ padding:{right:50,top:4} },
       scales:{ x:{min:0,ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}}} } }
@@ -1515,7 +1627,7 @@ function renderDetailDobra() {
       data:{ labels: tipos.slice(0,15), datasets:[{ label:'Rotas >12h', data: tipos.slice(0,15).map(t=>byT[t].orh12), backgroundColor:'#d03b3b', borderRadius:4, borderSkipped:false }]},
       options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y',
         plugins:{ legend:{display:false},
-          datalabels:{ anchor:'end', align:'end', formatter:v=>v>0?v.toLocaleString('pt-BR'):'', font:{size:8,weight:'600'}, color:'#52514e', offset:3, clip:false }
+          datalabels:{ anchor:'end', align:'end', formatter:v=>v>0?v.toLocaleString('pt-BR'):'', font:{size:8,weight:'600'}, color:'#2a2926', offset:3, clip:false }
         },
         layout:{ padding:{right:50,top:4} },
         scales:{ x:{min:0,ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}}} } }
@@ -1786,8 +1898,8 @@ function renderModalDS(body, filtered, kpi, bc, carriers) {
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{display:false} },
           scales:{
-            y:{ min:Math.max(0,Math.min(...td)-2), ticks:{callback:v=>v+'%',color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-            x:{ ticks:{color:'#898781',font:{size:11},maxRotation:45}, grid:{display:false} }
+            y:{ min:Math.max(0,Math.min(...td)-2), ticks:{callback:v=>v+'%',color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+            x:{ ticks:{color:'#45433f',font:{size:11},maxRotation:45}, grid:{display:false} }
           }
         }
       });
@@ -1863,10 +1975,10 @@ function renderModalInsucessos(body, filtered, kpi, bc, carriers) {
       ]},
       options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false},
-          datalabels:{ anchor:'end', align:'end', clip:false, offset:3, formatter:v=>v>0?v.toLocaleString('pt-BR'):'', font:{size:9,weight:'700'}, color:'#52514e' } },
+          datalabels:{ anchor:'end', align:'end', clip:false, offset:3, formatter:v=>v>0?v.toLocaleString('pt-BR'):'', font:{size:9,weight:'700'}, color:'#2a2926' } },
         scales:{
-          x:{ ticks:{color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-          y:{ ticks:{color:'#52514e',font:{size:11}}, grid:{display:false} }
+          x:{ ticks:{color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+          y:{ ticks:{color:'#2a2926',font:{size:11}}, grid:{display:false} }
         }
       }
     });
@@ -1946,10 +2058,10 @@ function renderModalORHC(body, filtered, kpi, bc, carriers) {
         { label:'ORHC (%)', data:orhcRanked.map(r=>+r.v.toFixed(2)), backgroundColor:orhcRanked.map(r=>r.v>=85?'#2a78d6':'#fab219'), borderRadius:4, borderSkipped:false, order:1 }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:true, labels:{color:'#898781',font:{size:11},boxWidth:12,boxHeight:12}}, metaLine:{value:85, color:'#2a78d6', label:'Meta 85%'} },
+        plugins:{ legend:{display:true, labels:{color:'#45433f',font:{size:11},boxWidth:12,boxHeight:12}}, metaLine:{value:85, color:'#2a78d6', label:'Meta 85%'} },
         scales:{
-          y:{ min:0, ticks:{callback:v=>v+'%',color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-          x:{ ticks:{color:'#898781',font:{size:11}}, grid:{display:false} }
+          y:{ min:0, ticks:{callback:v=>v+'%',color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+          x:{ ticks:{color:'#45433f',font:{size:11}}, grid:{display:false} }
         }
       }
     });
@@ -2029,8 +2141,8 @@ function renderModalDPPH(body, filtered, kpi, bc, carriers) {
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{display:false} },
           scales:{
-            y:{ min:Math.max(0,Math.min(...td)-2), ticks:{color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-            x:{ ticks:{color:'#898781',font:{size:11},maxRotation:45}, grid:{display:false} }
+            y:{ min:Math.max(0,Math.min(...td)-2), ticks:{color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+            x:{ ticks:{color:'#45433f',font:{size:11},maxRotation:45}, grid:{display:false} }
           }
         }
       });
@@ -2106,10 +2218,10 @@ function renderModalUnvisited(body, filtered, kpi, bc, carriers) {
         { label: 'Unvisited',        data: carriers.map(c => bc[c].unvisited), backgroundColor: '#d03b3b', borderRadius:4, borderSkipped:false, stack:'s' }
       ]},
       options: { responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:true, labels:{ color:'#898781', font:{size:11}, boxWidth:12, boxHeight:12 } } },
+        plugins:{ legend:{ display:true, labels:{ color:'#45433f', font:{size:11}, boxWidth:12, boxHeight:12 } } },
         scales:{
-          y:{ ticks:{color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-          x:{ ticks:{color:'#898781',font:{size:11}}, grid:{display:false} }
+          y:{ ticks:{color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+          x:{ ticks:{color:'#45433f',font:{size:11}}, grid:{display:false} }
         }
       }
     });
@@ -2338,6 +2450,38 @@ function getFiltered() {
   });
 }
 
+/* Mesmos filtros da getFiltered ativa, mas SEM restringir a semana (para comparar semana atual × anterior) */
+function getFilteredExceptSemana() {
+  const excluirAbertas = document.getElementById('toggleExcluirAbertas')?.checked ?? true;
+  return rawData.filter(r => {
+    if (excluirAbertas && COL.HORA_FIM && !(r[COL.HORA_FIM]||'').trim()) return false;
+    if (msHasVal('Base')    && !msState.Base.has((r[COL.BASE]||'').trim()))             return false;
+    if (msHasVal('MLP')     && !msState.MLP.has((r[COL.CARRIER]||'').trim()))           return false;
+    if (msHasVal('Tipo')    && COL.TIPO_VEICULO && !msState.Tipo.has((r[COL.TIPO_VEICULO]||'').trim())) return false;
+    if (msHasVal('Cluster') && COL.CLUSTER      && !msState.Cluster.has((r[COL.CLUSTER]||'').trim()))   return false;
+    if (msHasVal('Data')    && !msState.Data.has((r[COL.DATA]||'').trim()))             return false;
+    if (msHasVal('Ciclo')   && COL.CICLO        && !msState.Ciclo.has((r[COL.CICLO]||'').trim()))       return false;
+    return true;
+  });
+}
+
+/* KPIs da semana imediatamente anterior à selecionada (só quando exatamente 1 semana está no recorte) */
+function calcPrevWeekKPIs(filtered) {
+  if (!COL.SEMANA) return null;
+  const weeks = [...new Set(filtered.map(r => (r[COL.SEMANA]||'').trim()).filter(Boolean))];
+  if (weeks.length !== 1) return null;
+  const curN = parseInt(weeks[0], 10);
+  if (isNaN(curN)) return null;
+  const base = getFilteredExceptSemana();
+  const allWeeks = [...new Set(base.map(r => (r[COL.SEMANA]||'').trim()).filter(Boolean))]
+    .map(w => ({ w, n: parseInt(w, 10) })).filter(x => !isNaN(x.n)).sort((a, b) => a.n - b.n);
+  const prev = [...allWeeks].reverse().find(x => x.n < curN);
+  if (!prev) return null;
+  const prevRows = base.filter(r => (r[COL.SEMANA]||'').trim() === prev.w);
+  if (!prevRows.length) return null;
+  return { week: prev.w, kpi: calcKPIs(prevRows) };
+}
+
 /* ── Modal: CR ── */
 function renderModalCR(body, filtered, kpi, bc, carriers) {
   const crVals = carriers.map(c => bc[c].desp > 0 ? bc[c].claims / bc[c].desp * 100 : 0);
@@ -2382,11 +2526,11 @@ function renderModalCR(body, filtered, kpi, bc, carriers) {
         { label:'CR (%)', data: crRanked.map(r=>+r.v.toFixed(2)), backgroundColor: crRanked.map(r=>r.v<0.14?'#0ca30c':'#d03b3b'), borderRadius:4, borderSkipped:false, order:1 }
       ]},
       options: { responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{display:false}, metaLine:{value:0.14, color:'#c62828', label:'Meta 0,14%'}, datalabels:{ anchor:'end',align:'end',font:{size:9,weight:'500'},color:'#52514e',formatter:v=>v+'%',offset:1,clip:false } },
+        plugins:{ legend:{display:false}, metaLine:{value:0.14, color:'#c62828', label:'Meta 0,14%'}, datalabels:{ anchor:'end',align:'end',font:{size:9,weight:'500'},color:'#2a2926',formatter:v=>v+'%',offset:1,clip:false } },
         layout:{ padding:{ top:16 } },
         scales:{
-          y:{ ticks:{callback:v=>v+'%',color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-          x:{ ticks:{color:'#898781',font:{size:11}}, grid:{display:false} }
+          y:{ ticks:{callback:v=>v+'%',color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+          x:{ ticks:{color:'#45433f',font:{size:11}}, grid:{display:false} }
         }
       }
     });
@@ -2412,8 +2556,8 @@ function renderModalCR(body, filtered, kpi, bc, carriers) {
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{display:false}, datalabels:{display:false} },
           scales:{
-            y:{ ticks:{callback:v=>v+'%',color:'#898781',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
-            x:{ ticks:{color:'#898781',font:{size:11},maxRotation:45}, grid:{display:false} }
+            y:{ ticks:{callback:v=>v+'%',color:'#45433f',font:{size:11}}, grid:{color:'rgba(128,128,128,0.12)'} },
+            x:{ ticks:{color:'#45433f',font:{size:11},maxRotation:45}, grid:{display:false} }
           }
         }
       });
@@ -2805,7 +2949,7 @@ function renderDetailDS() {
           font:{ size:9, weight:'600' },
           color: ctx => {
             const qty = sortedIns[ctx.dataIndex]?.val||0;
-            return qty > 0 ? '#52514e' : 'transparent';
+            return qty > 0 ? '#2a2926' : 'transparent';
           },
           offset: 4,
           clip: false,
@@ -2916,7 +3060,7 @@ function renderDetailDSIns() {
       plugins:{ legend:{display:false},
         datalabels:{ anchor:'end', align:'end', clip:false, offset:4,
           formatter:(v,ctx) => sorted[ctx.dataIndex].val > 0 ? '-'+fmtPt(v,4)+'pp' : '',
-          font:{size:9,weight:'600'}, color:'#52514e' }},
+          font:{size:9,weight:'600'}, color:'#2a2926' }},
       layout:{ padding:{right:90,top:4,bottom:4} },
       scales:{
         x:{ min:0, ticks:{callback:v=>fmtPt(v,2)+'pp',font:{size:10}}, title:{display:true,text:'Impacto sobre DS (pp)'} },
@@ -3068,7 +3212,7 @@ function renderDetailORHC() {
       { data: orhcValsC, backgroundColor: orhcValsC.map(v=>v>=85?'#2a78d6':'#fab219'), borderRadius:4, borderSkipped:false }
     ]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false},
-      datalabels:{ anchor:'end', align:'end', formatter:v=>v+'%', font:{size:8,weight:'600'}, color:'#52514e', offset:3, clip:false } },
+      datalabels:{ anchor:'end', align:'end', formatter:v=>v+'%', font:{size:8,weight:'600'}, color:'#2a2926', offset:3, clip:false } },
       layout:{ padding:{top:28, right:8, left:4} },
       scales:{ y:{ min:0, ticks:{callback:v=>v+'%',font:{size:10}} }, x:{ ticks:{font:{size:9},maxRotation:45,autoSkip:false} } } }
   });
@@ -3137,7 +3281,7 @@ function renderDetailDPPH() {
       { data: dpphValsC, backgroundColor: dpphValsC.map(v=>v>=12.10?'#1baf7a':'#e34948'), borderRadius:4, borderSkipped:false }
     ]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false},
-      datalabels:{ anchor:'end', align:'end', formatter:v=>fmtPt(v), font:{size:8,weight:'600'}, color:'#52514e', offset:3, clip:false } },
+      datalabels:{ anchor:'end', align:'end', formatter:v=>fmtPt(v), font:{size:8,weight:'600'}, color:'#2a2926', offset:3, clip:false } },
       layout:{ padding:{top:28, right:8, left:4} },
       scales:{ y:{ ticks:{font:{size:10}} }, x:{ ticks:{font:{size:9},maxRotation:45,autoSkip:false} } } }
   });
@@ -3199,7 +3343,7 @@ function renderDetailUV() {
       { data: uvValsC, backgroundColor: uvValsC.map(v=>v<0.60?'#0ca30c':'#d03b3b'), borderRadius:4, borderSkipped:false }
     ]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false},
-      datalabels:{ anchor:'end', align:'end', formatter:v=>fmtPt(v,2)+'%', font:{size:8,weight:'600'}, color:'#52514e', offset:3, clip:false } },
+      datalabels:{ anchor:'end', align:'end', formatter:v=>fmtPt(v,2)+'%', font:{size:8,weight:'600'}, color:'#2a2926', offset:3, clip:false } },
       layout:{ padding:{top:28, right:8, left:4} },
       scales:{ y:{ min:0, ticks:{callback:v=>v+'%',font:{size:10}} }, x:{ ticks:{font:{size:9},maxRotation:45,autoSkip:false} } } }
   });
@@ -3254,7 +3398,7 @@ function renderDetailCR() {
       { data: crValsC, backgroundColor: crValsC.map(v=>v<0.14?'#0ca30c':'#d03b3b'), borderRadius:4, borderSkipped:false }
     ]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false},
-      datalabels:{ anchor:'end', align:'end', formatter:v=>fmtPt(v,2)+'%', font:{size:8,weight:'600'}, color:'#52514e', offset:3, clip:false } },
+      datalabels:{ anchor:'end', align:'end', formatter:v=>fmtPt(v,2)+'%', font:{size:8,weight:'600'}, color:'#2a2926', offset:3, clip:false } },
       layout:{ padding:{top:28, right:8, left:4} },
       scales:{ y:{ min:0, ticks:{callback:v=>v+'%',font:{size:10}} }, x:{ ticks:{font:{size:9},maxRotation:45,autoSkip:false} } } }
   });
