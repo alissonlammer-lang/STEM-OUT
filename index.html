@@ -889,7 +889,10 @@ table.detail tr:hover td { background: var(--surface-1); }
         </div>
       </div>
       <div class="detail-card">
-        <div class="detail-card-title">🔁 Motoristas reincidentes em reclamações — semana anterior × atual</div>
+        <div class="wa-row" style="margin-bottom:8px">
+          <div class="detail-card-title" style="margin-bottom:0;flex:1">🔁 Motoristas com reclamo reincidente — semana anterior × atual</div>
+          <button class="wa-btn" onclick="gerarRelatorioReincCR()"><svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.855L.057 23.882l6.186-1.622A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.006-1.373l-.358-.214-3.724.976.997-3.622-.235-.373A9.818 9.818 0 1112 21.818z"/></svg>Gerar relatório</button>
+        </div>
         <div id="reincCRNote" style="font-size:12px;color:var(--text-secondary);margin-bottom:10px"></div>
         <div class="detail-table-wrap">
           <table class="dtbl" id="detTblReincCR">
@@ -916,6 +919,17 @@ table.detail tr:hover td { background: var(--surface-1); }
         <label>Buscar:</label>
         <input type="text" id="rotaSearch" placeholder="ID Rota, MLP, motorista..." oninput="renderTabRota()" style="border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:5px 10px;font-size:12px;background:var(--surface-1);color:var(--text-primary);outline:none;width:240px;">
         <span id="rotaCount" style="font-size:11px;color:var(--text-muted);"></span>
+      </div>
+      <div class="detail-filter-row" style="align-items:flex-end">
+        <div class="filter-group">
+          <label>Insucesso</label>
+          <div class="ms-trigger" id="filterRotaIns" tabindex="0">Todos</div>
+          <div class="ms-dropdown" id="dropRotaIns">
+            <div class="ms-search"><input type="text" placeholder="Buscar..." id="searchRotaIns"></div>
+            <div class="ms-actions"><button class="ms-action-btn" onclick="msSelectAll('RotaIns')">Todos</button><button class="ms-action-btn" onclick="msClearOne('RotaIns')">Limpar</button></div>
+            <div id="optRotaIns"></div>
+          </div>
+        </div>
       </div>
       <div class="detail-card">
         <div class="detail-card-title">Detalhamento por rota — ordenado por maior insucessos</div>
@@ -1105,6 +1119,7 @@ function detectColumns(headers) {
     UNVISITED:       ['UNVISITED','INSUCESSOS_UNVISITED','UNVISITED_COUNT','QTD_UNVISITED'],
     QTDE_PACOTES:    ['QTDE_PACOTES','PACOTES','STOPS_PLAN','TOTAL_PACOTES'],
     ID_COM_RECLAMO:  ['ID_COM_RECLAMO','CLAIMS_ID','QTD_RECLAMOS','ID_RECLAMO'],
+    DRIVER:          ['SHP_LG_DRIVER_ID','ID_DRIVER','DRIVER_ID','DRIVER','MOTORISTA','ID_MOTORISTA','SHP_DRIVER_ID','ENTREGADOR','ID_ENTREGADOR','DRIVER_USER_ID','ROUTE.DRIVER.USER_ID'],
     ORH_HOURS:       ['ORH_HOURS','HOURS','HRS','HORAS_ORH','ORH_HOURS_REAL','H_REAL'],
     TIPO_VEICULO:    ['Tipo_veiculo','TIPO_VEICULO','TIPO_VEICULO_PADRAO','TIPO','VEHICLE_TYPE'],
     CLUSTER:         ['CLUSTER','CLUSTER_ID','CLUSTER_ROTA'],
@@ -1124,6 +1139,7 @@ function detectColumns(headers) {
     TOTAL_ROTAS: /total.*rota|rota.*total/i, ROTAS_ZERO: /rota.*0|rota.*zero/i,
     ORHC: /orhc/i,
     DPPH: /dpph/i, UNVISITED: /unvisit/i, QTDE_PACOTES: /^qtde_pacotes$/i, ID_COM_RECLAMO: /id_com_reclamo|reclamo/i,
+    DRIVER: h => /driver|motorista|entregador/i.test(h),
     ORH_HOURS: h => /^hours$/i.test(h) || /orh.*hour|hour.*orh|hrs_real/i.test(h),
     TIPO_VEICULO: h => /tipo.*veic|veic.*tipo|^tipo$/i.test(h),
     CLUSTER: h => /^cluster$/i.test(h),
@@ -1306,10 +1322,10 @@ function renderCharts(filtered) {
 
 function addChartCard(grid, id, title, subtitle) {
   const c = document.createElement('div');
-  c.className = 'chart-collapse';
+  c.className = 'chart-collapse open';
   c.id = 'cc_' + id;
   c.innerHTML = `
-    <button type="button" class="chart-collapse-header" aria-expanded="false" onclick="toggleChartCollapse('${id}', true)">
+    <button type="button" class="chart-collapse-header" aria-expanded="true" onclick="toggleChartCollapse('${id}')">
       <span class="chart-collapse-titlebox">
         <span class="chart-collapse-title">${title}</span>
         <span class="chart-collapse-sub">${subtitle}</span>
@@ -1692,14 +1708,14 @@ function loadPersistedFilters() {
 function restoreOpenCharts() {
   try {
     const st = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if (!st || !Array.isArray(st.openCharts)) return;
-    st.openCharts.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && !el.classList.contains('open')) {
-        el.classList.add('open');
-        const b = el.querySelector('.chart-collapse-header'); if (b) b.setAttribute('aria-expanded','true');
-        const canvasId = id.replace(/^cc_/, '');
-        const chart = charts[canvasId] || modalCharts[canvasId];
+    if (!st || !Array.isArray(st.openCharts)) return; // sem memória → mantém o padrão (todos abertos)
+    const wanted = new Set(st.openCharts);
+    document.querySelectorAll('#chartsGrid .chart-collapse').forEach(el => {
+      const shouldOpen = wanted.has(el.id);
+      el.classList.toggle('open', shouldOpen);
+      const b = el.querySelector('.chart-collapse-header'); if (b) b.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+      if (shouldOpen) {
+        const chart = charts[el.id.replace(/^cc_/, '')];
         if (chart) requestAnimationFrame(() => { try { chart.resize(); } catch(e){} });
       }
     });
@@ -2114,7 +2130,7 @@ function renderModalUnvisited(body, filtered, kpi, bc, carriers) {
 /* ══════════════════════════════
    MULTISELECT ENGINE
 ══════════════════════════════ */
-const msState = { Base: new Set(), MLP: new Set(), Tipo: new Set(), Cluster: new Set(), Semana: new Set(), Data: new Set(), Ciclo: new Set(), Motivo: new Set() };
+const msState = { Base: new Set(), MLP: new Set(), Tipo: new Set(), Cluster: new Set(), Semana: new Set(), Data: new Set(), Ciclo: new Set(), Motivo: new Set(), RotaIns: new Set() };
 const msMeta  = {
   Base:    { trigger:'filterBase',    drop:'dropBase',    opts:'optBase',    search:'searchBase',    col:()=>COL.BASE,         label:'Todas' },
   MLP:     { trigger:'filterMLP',     drop:'dropMLP',     opts:'optMLP',     search:'searchMLP',     col:()=>COL.CARRIER,      label:'Todos' },
@@ -2124,6 +2140,7 @@ const msMeta  = {
   Data:    { trigger:'filterData',    drop:'dropData',    opts:'optData',    search:'searchData',    col:()=>COL.DATA,         label:'Todas' },
   Ciclo:   { trigger:'filterCiclo',   drop:'dropCiclo',   opts:'optCiclo',   search:'searchCiclo',   col:()=>COL.CICLO,        label:'Todos' },
   Motivo:  { trigger:'filterMotivo',  drop:'dropMotivo',  opts:'optMotivo',  search:'searchMotivo',  col:()=>null,             label:'Todos' },
+  RotaIns: { trigger:'filterRotaIns', drop:'dropRotaIns', opts:'optRotaIns', search:'searchRotaIns', col:()=>null,             label:'Todos' },
 };
 
 function msGetVals(key) { return [...msState[key]]; }
@@ -2167,6 +2184,7 @@ function msToggle(key, val, checked) {
   if (key === 'Semana') updateDependentFilters('semana');
   if (key === 'Data')   updateDependentFilters('data');
   if (key === 'Motivo') { renderDetailDSIns(); return; }
+  if (key === 'RotaIns') { renderTabRota(); persistState(); return; }
   update();
 }
 
@@ -2179,6 +2197,7 @@ function msSelectAll(key) {
   if (key === 'Semana') updateDependentFilters('semana');
   if (key === 'Data')   updateDependentFilters('data');
   if (key === 'Motivo') { renderDetailDSIns(); return; }
+  if (key === 'RotaIns') { renderTabRota(); persistState(); return; }
   update();
 }
 
@@ -2190,6 +2209,7 @@ function msClearOne(key) {
   if (key === 'Semana') updateDependentFilters('semana');
   if (key === 'Data')   updateDependentFilters('data');
   if (key === 'Motivo') { renderDetailDSIns(); return; }
+  if (key === 'RotaIns') { renderTabRota(); persistState(); return; }
   update();
 }
 
@@ -2236,6 +2256,7 @@ Object.keys(msMeta).forEach(key => {
 
 function msGetCurrentVals(key) {
   if (key === 'Motivo') return INS_COLS.map(c => c.label);
+  if (key === 'RotaIns') return INS_COLS.map(c => c.label);
   // Returns the current available options for this key (respecting dependent filter)
   if (key === 'Data') {
     const sems = msGetVals('Semana');
@@ -2265,6 +2286,11 @@ function populateFilters() {
     msBuildOpts('Motivo', INS_COLS.map(c => c.label));
   }
   msRenderTrigger('Motivo');
+  const optRotaIns = document.getElementById('optRotaIns');
+  if (optRotaIns && optRotaIns.children.length === 0) {
+    msBuildOpts('RotaIns', INS_COLS.map(c => c.label));
+  }
+  msRenderTrigger('RotaIns');
   // Show optional filters only when column exists in data
   const show = (groupId, hasCol) => { const el = document.getElementById(groupId); if (el) el.style.display = hasCol ? '' : 'none'; };
   show('fgTipo',    !!COL.TIPO_VEICULO);
@@ -3237,33 +3263,26 @@ function renderDetailCR() {
   renderReincidentesCR(filtered);
 }
 
-/* ── CR: motoristas reincidentes (reclamaram na semana anterior E na atual) ── */
-function renderReincidentesCR(filtered) {
-  const tbody = document.getElementById('detTblReincCRBody');
-  const noteEl = document.getElementById('reincCRNote');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-
-  const drvOf = r => (r['SHP_LG_DRIVER_ID'] || r['ID_DRIVER'] || '').trim();
-  const hasDriver = filtered.some(r => drvOf(r) !== '');
-  if (!hasDriver) {
-    if (noteEl) noteEl.innerHTML = '⚠️ Não encontrei coluna de motorista (<code>SHP_LG_DRIVER_ID</code> ou <code>ID_DRIVER</code>) neste arquivo — sem ela não dá pra medir reincidência por driver.';
-    return;
-  }
-
-  // Duas semanas mais recentes presentes no período filtrado
+/* ── CR: motoristas com reclamo reincidente (com reclamo na semana anterior E na atual) ── */
+/* Cálculo compartilhado dos reincidentes (usado pela tabela e pelo relatório) */
+function computeReincCR(filtered) {
+  const drvOf = r => ((COL.DRIVER && r[COL.DRIVER]) || r['SHP_LG_DRIVER_ID'] || r['ID_DRIVER'] || '').toString().trim();
+  if (!filtered.some(r => drvOf(r) !== '')) return { status: 'no-driver' };
   const [semCur, semPrev] = getTwoLastSemanas(buildSemByDate(filtered));
-  if (!semCur || !semPrev) {
-    if (noteEl) noteEl.innerHTML = 'ℹ️ Preciso de pelo menos <strong>2 semanas</strong> no período. Se você filtrou uma única semana, limpe o filtro de Semana (ou selecione 2+) para comparar reincidência.';
-    return;
-  }
-
-  // Reclamações por motorista em cada uma das duas semanas
+  if (!semCur || !semPrev) return { status: 'few-weeks' };
+  // Maturação: o reclamo só aparece D+2, então ignoramos os 2 dias mais recentes na contagem
+  const MATURITY_DAYS = 2;
+  let maxDt = null;
+  filtered.forEach(r => { const dt = parseDateBR((r[COL.DATA]||'').trim()); if (dt && !isNaN(+dt) && (!maxDt || dt > maxDt)) maxDt = dt; });
+  const cutoff = maxDt ? new Date(maxDt.getTime() - MATURITY_DAYS*86400000) : null;
   const drv = {};
+  let curClaims = 0, prevClaims = 0;
   filtered.forEach(r => {
     const sem = (r[COL.SEMANA] || '').trim();
     if (sem !== semCur && sem !== semPrev) return;
+    if (cutoff) { const dt = parseDateBR((r[COL.DATA]||'').trim()); if (!dt || isNaN(+dt) || dt > cutoff) return; }
     if (!(COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO] || '').trim() !== '')) return;
+    if (sem === semCur) curClaims++; else prevClaims++;
     const id = drvOf(r);
     if (!id) return;
     if (!drv[id]) drv[id] = { carrier: '—', cur: 0, prev: 0 };
@@ -3272,16 +3291,70 @@ function renderReincidentesCR(filtered) {
     const car = (r[COL.CARRIER] || '').trim();
     if (car) drv[id].carrier = car;
   });
-
-  // Reincidentes = reclamaram nas DUAS semanas; ordena pela reclamação da semana atual
   const reinc = Object.entries(drv)
     .filter(([, d]) => d.cur > 0 && d.prev > 0)
     .map(([id, d]) => ({ id, ...d, total: d.cur + d.prev, delta: d.cur - d.prev }))
     .sort((a, b) => b.cur - a.cur || b.total - a.total);
+  const diag = {
+    curClaims, prevClaims,
+    driversCur: Object.values(drv).filter(d => d.cur > 0).length,
+    driversPrev: Object.values(drv).filter(d => d.prev > 0).length,
+    driverCol: COL.DRIVER || 'SHP_LG_DRIVER_ID/ID_DRIVER',
+    cutoff: cutoff ? cutoff.toLocaleDateString('pt-BR') : null,
+  };
+  return { status: 'ok', semCur, semPrev, reinc, diag };
+}
+
+/* Relatório WhatsApp — motoristas reincidentes em reclamações */
+function gerarRelatorioReincCR() {
+  const res = computeReincCR(getFiltered());
+  if (res.status === 'no-driver') { alert('Este arquivo não tem coluna de motorista (SHP_LG_DRIVER_ID / ID_DRIVER), então não dá pra gerar o relatório de reincidentes.'); return; }
+  if (res.status === 'few-weeks') { alert('Preciso de pelo menos 2 semanas no período. Limpe o filtro de Semana (ou selecione 2+) para comparar reincidência.'); return; }
+  const { semCur, semPrev, reinc, diag } = res;
+  const SEP = '━━━━━━━━━━━━━━━━━━━';
+  const ctxBase = [...msState.Base].sort().join(', ') || 'Todas as bases';
+  const lines = [];
+  lines.push(`🔁 MOTORISTAS COM RECLAMO REINCIDENTE — ${ctxBase}`);
+  lines.push(`🗓 Semana ${semPrev} (anterior) × ${semCur} (atual)`);
+  if (diag && diag.cutoff) lines.push(`⏳ D-2: reclamos maturados até ${diag.cutoff}`);
+  lines.push(`🎯 Motoristas com reclamo nas 2 semanas`);
+  lines.push(SEP);
+  if (!reinc.length) {
+    lines.push(`✅ Nenhum motorista reincidente entre as semanas ${semPrev} e ${semCur}.`);
+  } else {
+    lines.push(`${reinc.length} reincidente(s) · ordem: mais reclamações na semana atual`);
+    lines.push(SEP);
+    reinc.forEach((d, i) => {
+      const trend = d.delta > 0 ? '🔺' : (d.delta < 0 ? '🔻' : '➖');
+      const sign = d.delta > 0 ? '+' : '';
+      lines.push(`${i + 1}. ${d.id} · ${d.carrier}`);
+      lines.push(`   ${semPrev}: ${d.prev} → ${semCur}: ${d.cur}  ${trend} (${sign}${d.delta})`);
+    });
+  }
+  document.getElementById('waText').textContent = lines.join('\n');
+  document.getElementById('waBackdrop').classList.add('open');
+}
+
+function renderReincidentesCR(filtered) {
+  const tbody = document.getElementById('detTblReincCRBody');
+  const noteEl = document.getElementById('reincCRNote');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const res = computeReincCR(filtered);
+  if (res.status === 'no-driver') {
+    if (noteEl) noteEl.innerHTML = '⚠️ Não encontrei coluna de motorista (<code>SHP_LG_DRIVER_ID</code> ou <code>ID_DRIVER</code>) neste arquivo — sem ela não dá pra medir reincidência por driver.';
+    return;
+  }
+  if (res.status === 'few-weeks') {
+    if (noteEl) noteEl.innerHTML = 'ℹ️ Preciso de pelo menos <strong>2 semanas</strong> no período. Se você filtrou uma única semana, limpe o filtro de Semana (ou selecione 2+) para comparar reincidência.';
+    return;
+  }
+  const { semCur, semPrev, reinc, diag } = res;
 
   if (noteEl) noteEl.innerHTML = reinc.length
-    ? `<strong>${reinc.length}</strong> motorista(s) reincidente(s): reclamaram na semana <strong>${semPrev}</strong> e voltaram a reclamar na <strong>${semCur}</strong>. Ordenado pela reclamação da semana atual.`
-    : `✅ Nenhum motorista reincidente entre a semana <strong>${semPrev}</strong> e a <strong>${semCur}</strong>.`;
+    ? `<strong>${reinc.length}</strong> motorista(s) com reclamo reincidente: tiveram reclamo na semana <strong>${semPrev}</strong> e voltaram a ter na <strong>${semCur}</strong>. Ordenado por reclamos da semana atual.${diag.cutoff?` <span style="font-size:11px;color:var(--text-muted)">(D-2: reclamos maturados até ${diag.cutoff})</span>`:''}`
+    : `Nenhum motorista com reclamo reincidente entre a semana <strong>${semPrev}</strong> e a <strong>${semCur}</strong>.<br><span style="font-size:11px;color:var(--text-muted)">Diagnóstico — Semana ${semPrev}: ${diag.prevClaims} reclamos / ${diag.driversPrev} motoristas · Semana ${semCur}: ${diag.curClaims} reclamos / ${diag.driversCur} motoristas${diag.cutoff?` · D-2 até ${diag.cutoff}`:''} · coluna: <code>${diag.driverCol}</code></span>`;
 
   reinc.forEach((d, i) => {
     tbody.innerHTML += `<tr>
@@ -3306,11 +3379,15 @@ let rotaSorted = [];
 function renderTabRota() {
   const filtered = getFiltered();
   const q = (document.getElementById('rotaSearch')?.value||'').toLowerCase();
-  const rows = q ? filtered.filter(r =>
+  const insKeys = msState.RotaIns.size ? INS_COLS.filter(c => msState.RotaIns.has(c.label)).map(c => c.key) : [];
+  let rows = q ? filtered.filter(r =>
     (r[COL.CARRIER]||'').toLowerCase().includes(q) ||
     (r['SHP_LG_ROUTE_ID']||r['ID_ROTA']||'').toLowerCase().includes(q) ||
-    (r['SHP_LG_DRIVER_ID']||r['ID_DRIVER']||'').toLowerCase().includes(q)
+    (((COL.DRIVER && r[COL.DRIVER]) || r['SHP_LG_DRIVER_ID'] || r['ID_DRIVER'] || '')+'').toLowerCase().includes(q)
   ) : filtered;
+  if (insKeys.length) {
+    rows = rows.filter(r => insKeys.some(k => n(r[k]) > 0));
+  }
 
   rotaSorted = [...rows].sort((a,b) => {
     const insA = n(a[COL.DESPACHADOS]) - n(a[COL.ENTREGUES]);
@@ -3343,6 +3420,8 @@ function renderRotaPage() {
     const dpphR = n(r[COL.DPPH]) > 0 ? n(r[COL.DPPH]).toFixed(2) : '—';
     const uvR   = n(r[COL.UNVISITED]);
     const crR   = (COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim() !== '') ? 1 : 0;
+    const insBreak = INS_COLS.map(c => ({ label:c.label, v:n(r[c.key]) })).filter(x => x.v > 0).sort((a,b) => b.v - a.v);
+    const insTitle = insBreak.length ? 'Insucessos por motivo:\n' + insBreak.map(x => `• ${x.label}: ${x.v}`).join('\n') : 'Sem detalhamento por motivo';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -3353,7 +3432,7 @@ function renderRotaPage() {
       <td>${(r[COL.CARRIER]||'').trim()}</td>
       <td>${desp.toLocaleString('pt-BR')}</td>
       <td>${entr.toLocaleString('pt-BR')}</td>
-      <td style="color:${ins>0?'var(--danger)':'var(--success)'};font-weight:${ins>0?700:400}">${ins.toLocaleString('pt-BR')}</td>
+      <td title="${insTitle}" style="color:${ins>0?'var(--danger)':'var(--success)'};font-weight:${ins>0?700:400};cursor:help">${ins.toLocaleString('pt-BR')}</td>
       <td>${dsR!==null?`<span class="pill ${dsR>=98.5?'good':'bad'}">${fmtPt(dsR)}%</span>`:'—'}</td>
       <td>${orhcR!==null?`<span class="pill ${orhcR===1?'good':'bad'}">${orhcR===1?'OK':'Não OK'}</span>`:'—'}</td>
       <td>${dpphR}</td>
