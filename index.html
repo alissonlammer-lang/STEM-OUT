@@ -107,28 +107,62 @@ header span { font-size: 12px; color: #888; }
 .main-content { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
 
 /* KPI CARDS */
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
-.kpi-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 16px 18px; position: relative; overflow: hidden; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s, border-color 0.12s; }
+.kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+@media (max-width: 420px) { .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 300px) { .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kpi-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 9px 10px; position: relative; overflow: hidden; cursor: pointer; transition: box-shadow 0.15s, transform 0.12s, border-color 0.12s; }
 .kpi-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.10); transform: translateY(-1px); border-color: #FFE600; }
 .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 12px 12px 0 0; }
 .kpi-card.good::before { background: var(--success); }
 .kpi-card.bad::before  { background: var(--danger); }
 .kpi-card.stat-card::before { background: var(--border-strong); }
 .stat-val { color: var(--text-primary) !important; }
-.kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 6px; }
-.kpi-value { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; letter-spacing: -1px; }
+.kpi-label { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin-bottom: 3px; }
+.kpi-value { font-size: 18px; font-weight: 700; line-height: 1; margin-bottom: 3px; letter-spacing: -0.5px; }
 .kpi-value.good { color: var(--success); }
 .kpi-value.bad  { color: var(--danger); }
-.kpi-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-.kpi-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.kpi-sub { font-size: 10px; color: var(--text-secondary); margin-top: 3px; line-height: 1.3; }
+.kpi-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; }
 .kpi-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
 .kpi-badge.good { background: var(--success-bg); color: var(--success-text); }
 .kpi-badge.bad  { background: var(--danger-bg);  color: var(--danger-text); }
 .kpi-target { font-size: 11px; color: var(--text-muted); }
-.kpi-detail-hint { position: absolute; bottom: 10px; right: 12px; font-size: 11px; color: var(--text-muted); opacity: 0.7; }
+.kpi-prev { font-size: 11px; margin-top: 6px; padding: 4px 8px; border-radius: 7px; background: var(--surface-1); color: var(--text-secondary); line-height: 1.35; }
+.kpi-prev strong { color: var(--text-primary); }
+.prev-banner { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; border: 0.5px solid var(--border); background: var(--surface-1); }
+.prev-banner.off { border-left: 4px solid var(--warning); }
+.prev-banner.on  { border-left: 4px solid var(--success); }
+.prev-banner strong { color: var(--text-primary); }
+.prev-banner .pv-title { font-weight: 700; margin-bottom: 4px; font-size: 13px; }
+.welcome-backdrop { position: fixed; inset: 0; z-index: 10001; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); padding: 20px; }
+.welcome-backdrop.open { display: flex; }
+.welcome-card { background: var(--surface); border-radius: 16px; padding: 26px 24px; max-width: 380px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.35); border-top: 5px solid #FFE600; }
+.welcome-emoji { font-size: 38px; line-height: 1; }
+.welcome-card h2 { font-size: 17px; margin: 8px 0 14px; color: var(--text-primary); }
+.welcome-sub { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; font-weight: 600; }
+.welcome-people { display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+.welcome-person { background: var(--surface-1); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.welcome-person strong { font-size: 14px; color: var(--text-primary); }
+.welcome-person span { font-size: 12px; color: var(--text-secondary); }
+.welcome-phone { font-weight: 600; color: var(--text-primary) !important; }
+.welcome-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 18px; }
+.welcome-btn { background: #FFE600; color: #1a1a1a; border: none; border-radius: 10px; padding: 11px 20px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; }
+.welcome-btn:hover { filter: brightness(0.95); }
+.welcome-dismiss { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: var(--text-muted); margin-top: 12px; cursor: pointer; }
+.enc-summary { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; }
+@media (max-width: 640px) { .enc-summary { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.enc-card { background: var(--surface-1); border: 0.5px solid var(--border); border-radius: 10px; padding: 12px 10px; text-align: center; cursor: pointer; transition: border-color .12s, transform .1s; }
+.enc-card:hover { border-color: #FFE600; transform: translateY(-1px); }
+.enc-card.enc-card-active { border-color: #FFE600; box-shadow: 0 0 0 1px #FFE600 inset; }
+.enc-card-emoji { font-size: 18px; line-height: 1; }
+.enc-card-val { font-size: 22px; font-weight: 700; color: var(--text-primary); line-height: 1.15; }
+.enc-card-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+.enc-card-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.enc-btn-active { border-color: #FFE600 !important; color: var(--text-primary) !important; font-weight: 700; }
+.kpi-detail-hint { display: block; text-align: right; font-size: 9px; color: var(--text-muted); opacity: 0.75; margin-top: 6px; }
 
 /* CHARTS GRID */
-.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.charts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .chart-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 16px 14px 14px; }
 .chart-title { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
 .chart-subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
@@ -199,6 +233,8 @@ table.summary tr:hover td { background: var(--surface-1); }
 .detail-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
 .detail-card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 18px; }
 .detail-card-title { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 0.5px solid var(--border); }
+.chart-btn { font-size: 11px; padding: 3px 9px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-1); color: var(--text-secondary); cursor: pointer; white-space: nowrap; transition: border-color .12s, color .12s; }
+.chart-btn:hover { border-color: #FFE600; color: var(--text-primary); }
 .detail-chart-wrap { position: relative; height: 300px; }
 .detail-chart-wrap-tall { position: relative; height: 420px; }
 
@@ -477,6 +513,7 @@ table.detail tr:hover td { background: var(--surface-1); }
     <button class="tab-btn" onclick="showMainTab('tabUnvisited',this)">👁 Não Visitados</button>
     <button class="tab-btn" onclick="showMainTab('tabCR',this)">⚠️ CR</button>
     <button class="tab-btn" onclick="showMainTab('tabRota',this)">🗺 Por Rota</button>
+    <button class="tab-btn" onclick="showMainTab('tabEncerramento',this)">⏱ Encerramento D+</button>
     <button class="tab-btn" onclick="showMainTab('tabDobra',this)">🔄 Dobra de Rotas</button>
   </div>
 
@@ -484,6 +521,7 @@ table.detail tr:hover td { background: var(--surface-1); }
   <div id="tabGeral" class="tab-section active">
   <div class="main-content">
     <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="charts-grid" id="chartsGrid"></div>
     <div class="summary-table-card" style="margin-bottom:16px">
       <div class="table-header">Detalhamento por grupo</div>
       <div style="overflow-x:auto">
@@ -496,7 +534,6 @@ table.detail tr:hover td { background: var(--surface-1); }
         </table>
       </div>
     </div>
-    <div class="charts-grid" id="chartsGrid"></div>
 
     <!-- PAINEL PIVOT (referência estilo tableau) -->
     <div class="summary-table-card">
@@ -861,7 +898,7 @@ table.detail tr:hover td { background: var(--surface-1); }
       <div class="detail-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:220px">
           <div class="detail-card-title" style="margin-bottom:2px">📅 Extrato diário de CR — dia selecionado</div>
-          <div style="font-size:11px;color:var(--text-muted)">CR do dia selecionado (padrão D-3 a partir de <strong>hoje</strong>), pela <strong>data de conclusão da rota</strong> — rota que despachou num dia e concluiu no D+1 conta no dia da conclusão. Grupos SVC e XPT (EAL1–EAL4, ECE1) e, no final, 🟥 NEX/Extras (BRNAL). Lista só as bases com reclamo no dia, a quantidade e os motoristas (por ID) abaixo.</div>
+          <div style="font-size:11px;color:var(--text-muted)">CR do dia selecionado (padrão D-3 a partir de <strong>hoje</strong>), pela <strong>data de conclusão da rota</strong> — rota que despachou num dia e concluiu no D+1 conta no dia da conclusão. Grupos 🟦 SVC e 🟨 XPT no CR geral e, no final, 🟩 DC (Agências Kangu, bases BRD) e 🟥 NEX (Extras, bases BRN) como extras. Lista só as bases com reclamo no dia, a quantidade e os motoristas (por ID) abaixo.</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <label style="font-size:11px;color:var(--text-muted)">Dia:</label>
@@ -976,24 +1013,62 @@ table.detail tr:hover td { background: var(--surface-1); }
           </div>
         </div>
       </div>
+      <div class="detail-card" id="driverInsChartCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;gap:8px;flex-wrap:wrap;">
+          <div class="detail-card-title" style="margin-bottom:0" id="driverInsChartTitle">Top drivers por Insucessos</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:11px;color:var(--text-muted)">Top</label>
+            <select id="driverInsTopN" onchange="renderDriverInsChart()" style="background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:3px 8px;font-size:12px;cursor:pointer;">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+            </select>
+            <button class="chart-btn" id="driverInsMinBtn" onclick="toggleInsChart('driver')" title="Minimizar/expandir gráfico">▾ Minimizar</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="driverInsChartSub">Total de insucessos por motorista</div>
+        <div id="driverInsCanvasWrap" style="position:relative;width:100%;height:360px"><canvas id="chartDriverIns"></canvas></div>
+      </div>
+      <div class="detail-card" id="routeInsChartCard">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;gap:8px;flex-wrap:wrap;">
+          <div class="detail-card-title" style="margin-bottom:0" id="routeInsChartTitle">Top rotas por Insucessos</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:11px;color:var(--text-muted)">Top</label>
+            <select id="routeInsTopN" onchange="renderRouteInsChart()" style="background:var(--surface-1);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:3px 8px;font-size:12px;cursor:pointer;">
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+            </select>
+            <button class="chart-btn" id="routeInsMinBtn" onclick="toggleInsChart('rota')" title="Minimizar/expandir gráfico">▾ Minimizar</button>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="routeInsChartSub">Total de insucessos por rota</div>
+        <div id="routeInsCanvasWrap" style="position:relative;width:100%;height:360px"><canvas id="chartRouteIns"></canvas></div>
+      </div>
       <div class="detail-card">
         <div class="detail-card-title">Detalhamento por rota — ordenado por maior insucessos</div>
-        <div class="detail-table-wrap">
+        <div class="detail-table-wrap" id="rotaTableWrap" style="max-height:560px">
           <table class="dtbl" id="detTblRota">
             <thead><tr>
               <th onclick="sortDtbl('detTblRota',0)">#</th>
               <th onclick="sortDtbl('detTblRota',1)">ID Rota</th>
               <th onclick="sortDtbl('detTblRota',2)">Data</th>
               <th onclick="sortDtbl('detTblRota',3)">Semana</th>
-              <th onclick="sortDtbl('detTblRota',4)">MLP</th>
-              <th onclick="sortDtbl('detTblRota',5)">Despachados</th>
-              <th onclick="sortDtbl('detTblRota',6)">Entregues</th>
-              <th onclick="sortDtbl('detTblRota',7)">Insucessos</th>
-              <th onclick="sortDtbl('detTblRota',8)">DS %</th>
-              <th onclick="sortDtbl('detTblRota',9)">ORHC</th>
-              <th onclick="sortDtbl('detTblRota',10)">DPPH</th>
-              <th onclick="sortDtbl('detTblRota',11)">Não Visitados</th>
-              <th onclick="sortDtbl('detTblRota',12)">CR</th>
+              <th onclick="sortDtbl('detTblRota',4)">Base</th>
+              <th onclick="sortDtbl('detTblRota',5)">MLP</th>
+              <th onclick="sortDtbl('detTblRota',6)">ID Driver</th>
+              <th onclick="sortDtbl('detTblRota',7)">Despachados</th>
+              <th onclick="sortDtbl('detTblRota',8)">Entregues</th>
+              <th onclick="sortDtbl('detTblRota',9)">Insucessos</th>
+              <th onclick="sortDtbl('detTblRota',10)">DS %</th>
+              <th onclick="sortDtbl('detTblRota',11)">ORHC</th>
+              <th onclick="sortDtbl('detTblRota',12)">DPPH</th>
+              <th onclick="sortDtbl('detTblRota',13)">Não Visitados</th>
+              <th onclick="sortDtbl('detTblRota',14)">CR</th>
+              <th id="rotaInsTblSep" style="border-left:2px solid var(--border-strong);background:var(--surface-1);color:var(--text-muted);font-size:10px;white-space:nowrap">↓ Motivos</th>
+              <th id="rotaInsTblHeaders"></th>
             </tr></thead>
             <tbody id="detTblRotaBody"></tbody>
           </table>
@@ -1003,6 +1078,69 @@ table.detail tr:hover td { background: var(--surface-1); }
           <span id="rotaPageInfo" style="font-size:11px;color:var(--text-muted);">Página 1</span>
           <button id="rotaNext" onclick="rotaPage++;document.getElementById('detTblRotaBody').innerHTML='';renderRotaPage();" style="padding:5px 12px;border:0.5px solid var(--border-strong);border-radius:var(--radius);background:var(--surface-1);cursor:pointer;font-size:12px;">Próxima →</button>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- ══════ TAB: ENCERRAMENTO D+ ══════ -->
+  <div id="tabEncerramento" class="tab-section">
+    <div class="detail-content">
+      <div class="detail-card">
+        <div class="detail-card-title">⏱ Encerramento de rotas (D+)</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+          Rotas agrupadas por <strong>quando foram encerradas</strong> em relação ao dia de despacho. <strong>Pendente</strong> = rota sem data de conclusão (ainda não finalizada). <strong>D+1 / D+2</strong> = fechou 1 ou 2 dias depois do despacho. Clique num card para filtrar a tabela.
+        </div>
+        <div id="encSummary" class="enc-summary"></div>
+      </div>
+      <div class="detail-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div class="detail-card-title" style="margin:0;border:0;padding:0">🏆 Ranking de drivers — encerramento tardio (D+ / pendente)</div>
+          <button class="chart-btn" onclick="copyEncDrivers()">📋 Copiar ranking</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Motoristas com rotas encerradas fora do dia (D+1, D+2, D+3+) ou ainda pendentes, no período/semana filtrado. Ordenado pelo total de rotas tardias.</div>
+        <div class="detail-table-wrap" id="encDrvWrap" style="max-height:420px">
+          <table class="dtbl" id="encDrvTbl">
+            <thead><tr>
+              <th onclick="sortDtbl('encDrvTbl',0)">#</th>
+              <th onclick="sortDtbl('encDrvTbl',1)">ID Driver</th>
+              <th onclick="sortDtbl('encDrvTbl',2)">MLP</th>
+              <th onclick="sortDtbl('encDrvTbl',3)">Base</th>
+              <th onclick="sortDtbl('encDrvTbl',4)">Tardias</th>
+              <th onclick="sortDtbl('encDrvTbl',5)">⏳ Pend.</th>
+              <th onclick="sortDtbl('encDrvTbl',6)">D+1</th>
+              <th onclick="sortDtbl('encDrvTbl',7)">D+2</th>
+              <th onclick="sortDtbl('encDrvTbl',8)">D+3+</th>
+              <th onclick="sortDtbl('encDrvTbl',9)">Total rotas</th>
+            </tr></thead>
+            <tbody id="encDrvBody"></tbody>
+          </table>
+        </div>
+        <div id="encDrvCount" style="font-size:11px;color:var(--text-muted);padding:8px 0 0"></div>
+      </div>
+      <div class="detail-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div class="detail-card-title" style="margin:0;border:0;padding:0">Rotas</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div id="encFilterBtns" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+            <input type="text" id="encSearch" placeholder="ID rota, base, MLP, driver..." oninput="renderEncerramento()" style="border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:5px 10px;font-size:12px;background:var(--surface-1);color:var(--text-primary);outline:none;width:200px;">
+            <button class="chart-btn" onclick="copyEncList()">📋 Copiar IDs</button>
+          </div>
+        </div>
+        <div class="detail-table-wrap" id="encTableWrap" style="max-height:560px">
+          <table class="dtbl" id="encTbl">
+            <thead><tr>
+              <th onclick="sortDtbl('encTbl',0)">ID Rota</th>
+              <th onclick="sortDtbl('encTbl',1)">Base</th>
+              <th onclick="sortDtbl('encTbl',2)">MLP</th>
+              <th onclick="sortDtbl('encTbl',3)">ID Driver</th>
+              <th onclick="sortDtbl('encTbl',4)">Despacho</th>
+              <th onclick="sortDtbl('encTbl',5)">Conclusão</th>
+              <th onclick="sortDtbl('encTbl',6)">Encerramento</th>
+              <th onclick="sortDtbl('encTbl',7)">Status</th>
+            </tr></thead>
+            <tbody id="encTblBody"></tbody>
+          </table>
+        </div>
+        <div id="encCount" style="font-size:11px;color:var(--text-muted);padding:8px 0 0"></div>
       </div>
     </div>
   </div>
@@ -1109,6 +1247,29 @@ table.detail tr:hover td { background: var(--surface-1); }
   </div>
 </div>
 
+<div class="welcome-backdrop" id="welcomeBackdrop" onclick="if(event.target===this)closeWelcome()">
+  <div class="welcome-card">
+    <div class="welcome-emoji">📦</div>
+    <h2>Dashboard de Indicadores Logísticos</h2>
+    <div class="welcome-sub">Dashboard criado por</div>
+    <div class="welcome-people">
+      <div class="welcome-person">
+        <strong>Ronaldo Rodrigues</strong>
+        <span>TL · SAL1</span>
+        <span class="welcome-phone">📱 82 9121-2643</span>
+      </div>
+      <div class="welcome-person">
+        <strong>Alysson Tavares</strong>
+        <span>OPS · SAL1</span>
+        <span class="welcome-phone">📱 82 9176-9424</span>
+      </div>
+    </div>
+    <div class="welcome-note">Qualquer dúvida, ajuste ou adicional, favor falar com os responsáveis acima.</div>
+    <button class="welcome-btn" onclick="closeWelcome()">Entendi, começar →</button>
+    <label class="welcome-dismiss"><input type="checkbox" id="welcomeDontShow"> Não mostrar novamente</label>
+  </div>
+</div>
+
 <script>
 let rawData = [];
 let charts = {};
@@ -1122,7 +1283,8 @@ function detectColumns(headers) {
   const map = {
     BASE:        ['BASE','BASE_OPERACAO','BASE_OPERAÇÃO','BASE_NAME'],
     CARRIER:     ['CARRIER_NAME','MLP','CARRIER','OPERADORA','TRANSPORTADORA'],
-    DATA:        ['DATA','DATE','DT','DT_ENTREGA','DATA_ENTREGA','DATA_DESPACHO'],
+    DATA:        ['DATA_INICIO','DATA','DATE','DT','DT_ENTREGA','DATA_ENTREGA','DATA_DESPACHO','DT_INICIO'],
+    DATA_FIM:    ['DATA_FIM','DATA_CONCLUSAO','DATA_CONCLUSÃO','DATA_ENCERRAMENTO','DT_FIM','DATA_FINAL'],
     SEMANA:      ['SEMANA','WEEK','NR_SEMANA','SEMANA_ANO'],
     DESPACHADOS: ['QTDE_DESPACHADOS','DESPACHADOS','TOTAL_DESPACHADOS','QTD_DESPACHADOS','DESPACHOS','DISPATCHED'],
     ENTREGUES:   ['QTDE_ENTREGUE','ENTREGUES','TOTAL_ENTREGUE','QTD_ENTREGUES','DELIVERED','TOTAL_ENTREGUES'],
@@ -1142,6 +1304,7 @@ function detectColumns(headers) {
     CICLO:           ['CICLO','CICLO_AM_PM','CICLO_ENTREGA','CYCLE'],
     HORA_FIM:        ['hora_fim','HORA_FIM','HORA_FIM_ROTA','END_TIME'],
     TIPO_VEICULO:    ['TIPO_VEICULO','TIPO_VEICULO_PADRAO','Tipo_veiculo','TIPO','VEHICLE_TYPE','TIPO_DE_VEICULO'],
+    ENC_DMAIS:       ['ENCERRAMENTO_D_MAIS','ENCERRAMENTO_DMAIS','DIAS_ENCERRAMENTO','ENCERR_D_MAIS','D_MAIS','ENCERRAMENTO'],
   };
   const uH = headers.map(h => h.toUpperCase().trim().replace(/\s+/g,'_'));
   for (const [key, cands] of Object.entries(map)) {
@@ -1152,6 +1315,7 @@ function detectColumns(headers) {
     DESPACHADOS: /despach/i, ENTREGUES: h => /entreg/i.test(h) && !/insu/i.test(h),
     CARRIER: /carrier|mlp|transport/i, BASE: /base/i,
     DATA: /data|date|dt/i, SEMANA: /semana|week/i,
+    DATA_FIM: h => /data_?fim|data.*conclus|data.*encerr|dt_?fim|data_?final/i.test(h),
     TOTAL_ROTAS: /total.*rota|rota.*total/i, ROTAS_ZERO: /rota.*0|rota.*zero/i,
     ROUTE_ID: h => /shp_lg_route|route_id|id_rota|rota_id|shp_route_id/i.test(h),
     PACKAGE_ID: h => /shipment_id|id_shipment|id_pacote|package_id|id_package|shp_id|id_envio|^shipment$/i.test(h),
@@ -1164,6 +1328,7 @@ function detectColumns(headers) {
     CICLO: h => /^ciclo$/i.test(h),
     HORA_FIM: h => /^hora_fim$/i.test(h),
     TIPO_VEICULO: h => /tipo.*veic|veic.*tipo|vehicle.*type|type.*vehicle/i.test(h),
+    ENC_DMAIS: h => /d_?mais/i.test(h) || /encerr/i.test(h),
   };
   for (const [key, test] of Object.entries(fallbacks)) {
     if (!COL[key]) {
@@ -1175,6 +1340,27 @@ function detectColumns(headers) {
 }
 
 function n(v) { return parseFloat(v) || 0; }
+
+// ── DPPH correto: deduplica por ROUTE_ID, soma ENTREGUES / soma ORH_HOURS ──
+function calcDpph(rows) {
+  if (!COL.ROUTE_ID || !COL.ORH_HOURS) {
+    // fallback: sem colunas necessárias, retorna 0
+    return { dpph: 0, dpphCount: 0 };
+  }
+  const seen = new Map(); // routeId -> { entr, hours }
+  rows.forEach(r => {
+    const rid = (r[COL.ROUTE_ID]||'').toString().trim();
+    if (!rid) return;
+    if (!seen.has(rid)) {
+      seen.set(rid, { entr: n(r[COL.ENTREGUES]), hours: n(r[COL.ORH_HOURS]) });
+    }
+    // se já existe, não soma novamente (dedup)
+  });
+  let totalEntr = 0, totalHours = 0;
+  seen.forEach(v => { totalEntr += v.entr; totalHours += v.hours; });
+  const dpph = totalHours > 0 ? totalEntr / totalHours : 0;
+  return { dpph, dpphCount: seen.size };
+}
 
 function getFiltered() {
   const base = document.getElementById('filterBase').value;
@@ -1203,15 +1389,14 @@ function calcKPIs(data) {
   const orhc             = orhcRows.length > 0
     ? (orhcRows.filter(r => n(r[COL.ORHC]) === 1).length / orhcRows.length) * 100
     : 0;
-  const dpphVals         = data.filter(r => n(r[COL.DPPH]) > 0).map(r => n(r[COL.DPPH]));
-  const dpph             = dpphVals.length > 0 ? dpphVals.reduce((a,b) => a+b,0) / dpphVals.length : 0;
+  const { dpph, dpphCount: dpphCountCalc } = calcDpph(data);
   const totalUnvisited   = data.reduce((s,r) => s + n(r[COL.UNVISITED]), 0);
   const totalPacotes     = COL.QTDE_PACOTES ? data.reduce((s,r) => s + n(r[COL.QTDE_PACOTES]), 0) : totalDespachados;
   const unvisitedPct     = totalPacotes > 0 ? (totalUnvisited / totalPacotes) * 100 : 0;
   const totalClaims      = COL.ID_COM_RECLAMO ? data.filter(r => (r[COL.ID_COM_RECLAMO]||'').trim() !== '').length : 0;
   const crPct            = totalDespachados > 0 ? (totalClaims / totalDespachados) * 100 : 0;
   const orhcNum          = orhcRows.filter(r => n(r[COL.ORHC]) === 1).length;
-  return { totalDespachados, totalEntregues, insucessos, ds, totalRotas, rotasZero, orhc, orhcNum, orhcDenom: orhcRows.length, dpph, dpphCount: dpphVals.length, totalUnvisited, totalPacotes, unvisitedPct, totalClaims, crPct };
+  return { totalDespachados, totalEntregues, insucessos, ds, totalRotas, rotasZero, orhc, orhcNum, orhcDenom: orhcRows.length, dpph, dpphCount: dpphCountCalc, totalUnvisited, totalPacotes, unvisitedPct, totalClaims, crPct };
 }
 
 /* ── KPI Cards ── */
@@ -1292,16 +1477,31 @@ function byCarrierData(filtered) {
   const bc = {};
   filtered.forEach(r => {
     const k = r[COL.CARRIER] || 'N/D';
-    if (!bc[k]) bc[k] = { desp:0,entr:0,rotasZero:0,totalRotas:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,unvisited:0,pacotes:0,claims:0 };
+    if (!bc[k]) bc[k] = { desp:0,entr:0,rotasZero:0,totalRotas:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,unvisited:0,pacotes:0,claims:0,
+                           _dpphRoutes: new Map() };
     bc[k].desp      += n(r[COL.DESPACHADOS]);
     bc[k].entr      += n(r[COL.ENTREGUES]);
     bc[k].rotasZero += n(r[COL.ROTAS_ZERO]);
     bc[k].totalRotas++;
     if(COL.ORHC && r[COL.ORHC] !== '' && r[COL.ORHC] !== undefined){ bc[k].orhcTotal++; if(n(r[COL.ORHC]) === 1) bc[k].orhcOK++; }
-    if(n(r[COL.DPPH])>0){ bc[k].dpphSum+=n(r[COL.DPPH]); bc[k].dpphCnt++; }
+    // DPPH: dedup por ROUTE_ID
+    if (COL.ROUTE_ID && COL.ORH_HOURS) {
+      const rid = (r[COL.ROUTE_ID]||'').toString().trim();
+      if (rid && !bc[k]._dpphRoutes.has(rid)) {
+        bc[k]._dpphRoutes.set(rid, { entr: n(r[COL.ENTREGUES]), hours: n(r[COL.ORH_HOURS]) });
+      }
+    }
     bc[k].unvisited += n(r[COL.UNVISITED]);
     bc[k].pacotes   += COL.QTDE_PACOTES ? n(r[COL.QTDE_PACOTES]) : n(r[COL.DESPACHADOS]);
     bc[k].claims    += (COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim() !== '') ? 1 : 0;
+  });
+  // Consolidate DPPH from deduped routes: dpphSum stores the final ratio (entr/hours)
+  Object.values(bc).forEach(d => {
+    let s = 0, c = 0, h = 0;
+    d._dpphRoutes.forEach(v => { s += v.entr; h += v.hours; c++; });
+    d.dpphCnt = c;
+    d.dpphSum = h > 0 ? s / h : 0; // ratio: sum(entr) / sum(hours) — NOT a sum, just reuses field name
+    delete d._dpphRoutes;
   });
   return bc;
 }
@@ -1351,7 +1551,82 @@ function renderCharts(filtered) {
     options: barOpts(v=>v+'%', 0, null, {value:0.14, color:'#c62828', label:'Meta 0,14%'})
   });
 
+  // ── Charts por BASE (only when COL.BASE exists and >1 base) ──
+  if (COL.BASE) {
+    const bb = byBaseData(filtered);
+    const bases = Object.keys(bb).sort();
+    if (bases.length > 1) {
+      // Section divider
+      const divider = document.createElement('div');
+      divider.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:12px;margin:4px 0 0';
+      divider.innerHTML = `<span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--text-muted);white-space:nowrap">Visão por Base</span><div style="flex:1;height:1px;background:var(--border-strong)"></div>`;
+      grid.appendChild(divider);
+
+      function sortDescBase(vals) {
+        const paired = bases.map((b,i) => ({ b, v: vals[i] })).sort((a,b2) => b2.v - a.v);
+        return { labels: paired.map(p => p.b), data: paired.map(p => p.v) };
+      }
+
+      // DS por base
+      const dsBase = bases.map(b => bb[b].desp>0 ? +(bb[b].entr/bb[b].desp*100).toFixed(2) : 0);
+      const dsBSorted = sortDescBase(dsBase);
+      addChartCard(grid,'chartDSBase','DS por Base','% entregas sobre despachados  •  meta ≥ 98,5%');
+      destroyChart('chartDSBase');
+      charts['chartDSBase'] = new Chart(document.getElementById('chartDSBase'),{
+        type:'bar', data:{ labels:dsBSorted.labels, datasets:[{ label:'DS (%)', data:dsBSorted.data, backgroundColor:dsBSorted.data.map(v=>v>=98.5?'#0ca30c':'#d03b3b'), borderRadius:4, borderSkipped:false }]},
+        options: barOpts(v=>v+'%', Math.max(0,Math.min(...dsBSorted.data)-2), null, {value:98.5, color:'#2e7d32', label:'Meta 98,5%'})
+      });
+
+      // ORHC por base
+      const orhcBase = bases.map(b => bb[b].orhcTotal>0 ? +(bb[b].orhcOK/bb[b].orhcTotal*100).toFixed(2) : 0);
+      const orhcBSorted = sortDescBase(orhcBase);
+      addChartCard(grid,'chartORHCBase','ORHC por Base','% rotas com ao menos 1 entrega  •  meta ≥ 85%');
+      destroyChart('chartORHCBase');
+      charts['chartORHCBase'] = new Chart(document.getElementById('chartORHCBase'),{
+        type:'bar', data:{ labels:orhcBSorted.labels, datasets:[{ label:'ORHC (%)', data:orhcBSorted.data, backgroundColor:orhcBSorted.data.map(v=>v>=85?'#2a78d6':'#fab219'), borderRadius:4, borderSkipped:false }]},
+        options: barOpts(v=>v+'%', 0, 105, {value:85, color:'#2a78d6', label:'Meta 85%'})
+      });
+
+      // CR por base
+      const crBase = bases.map(b => bb[b].desp>0 ? +(bb[b].claims/bb[b].desp*100).toFixed(2) : 0);
+      const crBSorted = sortDescBase(crBase);
+      addChartCard(grid,'chartCRBase','CR por Base','IDs com reclamo / despachados  •  meta < 0,14%');
+      destroyChart('chartCRBase');
+      charts['chartCRBase'] = new Chart(document.getElementById('chartCRBase'),{
+        type:'bar', data:{ labels:crBSorted.labels, datasets:[{ label:'CR (%)', data:crBSorted.data, backgroundColor:crBSorted.data.map(v=>v<0.14?'#0ca30c':'#d03b3b'), borderRadius:4, borderSkipped:false }]},
+        options: barOpts(v=>v+'%', 0, null, {value:0.14, color:'#c62828', label:'Meta 0,14%'})
+      });
+    }
+  }
+
   restoreOpenCharts();
+}
+
+function byBaseData(filtered) {
+  const bb = {};
+  const _dpphRoutes = {};
+  filtered.forEach(r => {
+    if (!COL.BASE) return;
+    const b = (r[COL.BASE]||'N/D').trim();
+    if (!bb[b]) {
+      bb[b] = { desp:0, entr:0, orhcOK:0, orhcTotal:0, dpphSum:0, dpphCnt:0, claims:0 };
+      _dpphRoutes[b] = new Map();
+    }
+    const d = bb[b];
+    d.desp  += n(r[COL.DESPACHADOS]);
+    d.entr  += n(r[COL.ENTREGUES]);
+    if (COL.ORHC && r[COL.ORHC]!=='' && r[COL.ORHC]!==undefined) { d.orhcTotal++; if(n(r[COL.ORHC])===1) d.orhcOK++; }
+    d.claims += (COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim()!=='') ? 1 : 0;
+    const rid = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    if (rid && !_dpphRoutes[b].has(rid)) {
+      _dpphRoutes[b].set(rid, { entr: n(r[COL.ENTREGUES]), hours: COL.ORH_HOURS ? n(r[COL.ORH_HOURS]) : 0 });
+    }
+  });
+  Object.keys(bb).forEach(b => {
+    let s=0,h=0,c=0; _dpphRoutes[b].forEach(v=>{s+=v.entr;h+=v.hours;c++;});
+    bb[b].dpphSum = h>0?s/h:0; bb[b].dpphCnt = c;
+  });
+  return bb;
 }
 
 function addChartCard(grid, id, title, subtitle) {
@@ -1405,7 +1680,7 @@ function renderTable(filtered) {
     const ins  = d.desp - d.entr;
     const ds   = d.desp>0 ? (d.entr/d.desp*100) : 0;
     const orhc = d.orhcTotal > 0 ? (d.orhcOK / d.orhcTotal * 100) : 0;
-    const dpph = d.dpphCnt>0 ? d.dpphSum/d.dpphCnt : 0;
+    const dpph = d.dpphSum; // dpphSum already stores ratio: sum(entr)/sum(hours), deduped by ROUTE_ID
     const uPct = d.pacotes>0 ? (d.unvisited/d.pacotes*100) : 0;
     const crPct= d.desp>0 ? (d.claims/d.desp*100) : 0;
     const tr = document.createElement('tr');
@@ -1644,6 +1919,7 @@ function update() {
     if (id === 'tabUnvisited') renderDetailUV();
     if (id === 'tabCR')        renderDetailCR();
     if (id === 'tabRota')      renderTabRota();
+    if (id === 'tabEncerramento') renderEncerramento();
   }
   persistState();
 }
@@ -1807,6 +2083,48 @@ function renderDetailDobra() {
     tbody3.appendChild(tr);
   });
 }
+function prevencaoHTML(kpiId, kpi, filtered) {
+  const fmt = v => Math.abs(v).toLocaleString('pt-BR');
+  const desp = kpi.totalDespachados;
+  const box = (on, title, body) => `<div class="prev-banner ${on?'on':'off'}"><div class="pv-title">${on?'✅':'🎯'} ${title}</div><div>${body}</div></div>`;
+  if (kpiId === 'ds') {
+    if (!desp) return '';
+    const need = Math.ceil(0.985*desp), gap = need - kpi.totalEntregues, on = gap <= 0;
+    return box(on, on ? 'Meta de DS batida' : 'Como bater a meta de DS (≥ 98,5%)',
+      on ? `Você tem folga de <strong>${fmt(gap)}</strong> entregas acima da meta.`
+         : `Precisa de <strong>${fmt(need)}</strong> entregues (hoje ${fmt(kpi.totalEntregues)} de ${fmt(desp)}). <strong>Faltam ${fmt(gap)} entregas</strong> — equivale a reduzir ${fmt(gap)} insucessos.`);
+  }
+  if (kpiId === 'orhc') {
+    if (!kpi.orhcDenom) return '';
+    const need = Math.ceil(0.85*kpi.orhcDenom), gap = need - kpi.orhcNum, on = gap <= 0;
+    return box(on, on ? 'Meta de ORHC batida' : 'Como bater a meta de ORHC (≥ 85%)',
+      on ? `Você tem folga de <strong>${fmt(gap)}</strong> rotas acima da meta.`
+         : `Precisa de <strong>${fmt(need)}</strong> rotas com entrega de ${fmt(kpi.orhcDenom)} (hoje ${fmt(kpi.orhcNum)}). <strong>Faltam ${fmt(gap)} rotas OK</strong> — foco em rotas zeradas / sem 1ª entrega.`);
+  }
+  if (kpiId === 'cr') {
+    if (!desp) return '';
+    const max = Math.ceil(0.0014*desp) - 1, gap = kpi.totalClaims - max, on = gap <= 0;
+    return box(on, on ? 'Meta de CR batida' : 'Como bater a meta de CR (< 0,14%)',
+      on ? `Você tem folga de <strong>${fmt(gap)}</strong> reclamos até o limite (máx. ${fmt(max)}).`
+         : `Máximo de <strong>${fmt(max)}</strong> reclamos para ficar < 0,14% (hoje ${fmt(kpi.totalClaims)}). <strong>Precisa reduzir ${fmt(gap)} reclamos.</strong>`);
+  }
+  if (kpiId === 'insucessos') {
+    if (!desp) return '';
+    const max = Math.floor(0.015*desp), gap = kpi.insucessos - max, on = gap <= 0;
+    let topLabel = '', topVal = 0, tot = 0;
+    try {
+      const sums = {}; INS_COLS.forEach(c => sums[c.key] = 0);
+      (filtered || getFiltered()).forEach(r => INS_COLS.forEach(c => { sums[c.key] += n(r[c.key]); }));
+      INS_COLS.forEach(c => { tot += sums[c.key]; if (sums[c.key] > topVal) { topVal = sums[c.key]; topLabel = c.label; } });
+    } catch (e) {}
+    const motivo = topLabel ? ` Maior ofensor: <strong>${topLabel}</strong> — ${fmt(topVal)} casos (${tot>0?Math.round(topVal/tot*100):0}% dos motivos); ataque este primeiro.` : '';
+    return box(on, on ? 'Insucessos dentro do limite' : 'Como manter o DS na meta (reduzir insucessos)',
+      (on ? `Folga de <strong>${fmt(gap)}</strong> insucessos até o limite (máx. ${fmt(max)}).`
+          : `Máximo de <strong>${fmt(max)}</strong> insucessos para DS ≥ 98,5% (hoje ${fmt(kpi.insucessos)}). <strong>Reduzir ${fmt(gap)}.</strong>`) + motivo);
+  }
+  return '';
+}
+
 function openModal(kpiId) {
   const filtered = getFiltered();
   const kpi = calcKPIs(filtered);
@@ -1857,6 +2175,8 @@ function openModal(kpiId) {
   document.getElementById('modalKpiDesc').textContent  = cfg.desc;
 
   cfg.render(body, filtered, kpi, bc, carriers);
+  const pv = prevencaoHTML(kpiId, kpi, filtered);
+  if (pv) body.insertAdjacentHTML('afterbegin', pv);
 
   document.getElementById('modalBackdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -2194,11 +2514,11 @@ function renderModalORHC(body, filtered, kpi, bc, carriers) {
 
 /* ── Modal: DPPH ── */
 function renderModalDPPH(body, filtered, kpi, bc, carriers) {
-  const dpphVals = carriers.map(c => bc[c].dpphCnt>0 ? bc[c].dpphSum/bc[c].dpphCnt : 0);
+  const dpphVals = carriers.map(c => bc[c].dpphSum); // dpphSum = ratio entr/hours, deduped
   const abaixo = carriers.filter((c,i) => dpphVals[i] < 12.10 && dpphVals[i] > 0);
   const semDados = carriers.filter((c,i) => dpphVals[i] === 0);
   // Ordena: maior DPPH (bateu meta) primeiro; "sem dados" vão pro fim
-  const dpphRanked   = carriers.map(c => ({ c, v: bc[c].dpphCnt>0 ? bc[c].dpphSum/bc[c].dpphCnt : 0 }));
+  const dpphRanked   = carriers.map(c => ({ c, v: bc[c].dpphSum }));
   const dpphComDados = dpphRanked.filter(r => r.v > 0).sort((a,b) => b.v - a.v);
   const dpphOrdered  = [...dpphComDados, ...dpphRanked.filter(r => r.v === 0)];
 
@@ -2230,10 +2550,15 @@ function renderModalDPPH(body, filtered, kpi, bc, carriers) {
   const timeKey = COL.SEMANA || COL.DATA;
   if (timeKey) {
     body.innerHTML += chartCollapse('Evolução do DPPH ao longo do tempo', 'mChartDPPH', 'DPPH evolução');
-    const bt = {};
-    filtered.forEach(r=>{ if(n(r[COL.DPPH])<=0) return; const k=r[timeKey]||'N/D'; if(!bt[k]) bt[k]={sum:0,cnt:0}; bt[k].sum+=n(r[COL.DPPH]); bt[k].cnt++; });
+    const bt = {}; // timeKey -> Map(routeId -> {entr, hours})
+    filtered.forEach(r=>{ 
+      const k=r[timeKey]||'N/D'; 
+      if(!bt[k]) bt[k]=new Map();
+      const rid=COL.ROUTE_ID?(r[COL.ROUTE_ID]||'').toString().trim():'';
+      if(rid&&!bt[k].has(rid)) bt[k].set(rid,{entr:n(r[COL.ENTREGUES]),hours:COL.ORH_HOURS?n(r[COL.ORH_HOURS]):0});
+    });
     const tl = Object.keys(bt).sort();
-    const td = tl.map(t=>+(bt[t].sum/bt[t].cnt).toFixed(2));
+    const td = tl.map(t=>{ let s=0,h=0; bt[t].forEach(v=>{s+=v.entr;h+=v.hours;}); return h>0?+(s/h).toFixed(2):0; });
     requestAnimationFrame(() => {
       const canvas = document.getElementById('mChartDPPH');
       if (!canvas) return;
@@ -2540,8 +2865,8 @@ function clearFilters() {
   update();
 }
 
-function getFiltered() {
-  const excluirAbertas = document.getElementById('toggleExcluirAbertas')?.checked ?? true;
+function getFiltered(opts) {
+  const excluirAbertas = !(opts && opts.includeAbertas) && (document.getElementById('toggleExcluirAbertas')?.checked ?? true);
   return rawData.filter(r => {
     if (excluirAbertas && COL.HORA_FIM && !(r[COL.HORA_FIM]||'').trim()) return false;
     if (msHasVal('Base')    && !msState.Base.has((r[COL.BASE]||'').trim()))             return false;
@@ -2692,6 +3017,163 @@ function renderModalCR(body, filtered, kpi, bc, carriers) {
 /* ══════════════════════════════════════════
    TAB SYSTEM
 ══════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   TAB: ENCERRAMENTO D+ (rotas pendentes / fechadas em D+1, D+2...)
+══════════════════════════════════════════ */
+let encBucketFilter = 'ALL';
+let _encRowsFiltered = [];
+function setEncFilter(b) { encBucketFilter = b; renderEncerramento(); }
+
+function _encCompute() {
+  const filtered = getFiltered({ includeAbertas: true });   // inclui rotas em andamento (pendentes)
+  const concCol = extratoDataCol();
+  const encCol  = COL.ENC_DMAIS;
+  const routeKeyOf = r => ((COL.ROUTE_ID && r[COL.ROUTE_ID]) || r['SHP_LG_ROUTE_ID'] || r['ID_ROTA'] || '').toString().trim();
+  const drvOf = r => (COL.DRIVER && r[COL.DRIVER]) || r['SHP_LG_DRIVER_ID'] || r['ID_DRIVER'] || '';
+  const seen = new Map();
+  filtered.forEach(r => { const k = routeKeyOf(r); if (!k || seen.has(k)) return; seen.set(k, r); });
+  const rows = [];
+  seen.forEach((r, k) => {
+    const desp = (r[COL.DATA]||'').trim();
+    const conc = concCol ? (r[concCol]||'').trim() : '';
+    const encRaw = encCol ? (r[encCol] ?? '').toString().trim() : '';
+    // primário: diferença despacho × conclusão
+    let dPlus = null, pending = false;
+    if (!conc) pending = true;
+    else {
+      const dv = parseDateBR(conc), db = parseDateBR(desp);
+      if (dv && db) dPlus = Math.round((dv - db) / 86400000);
+      else pending = true;
+    }
+    // fallback: se não há conclusão mas a coluna ENCERRAMENTO_D_MAIS traz um número, usa ele
+    if (pending && encRaw !== '') { const m = encRaw.match(/-?\d+/); if (m) { dPlus = parseInt(m[0], 10); pending = false; } }
+    let bucket;
+    if (pending) bucket = 'PEND';
+    else if (dPlus <= 0) bucket = 'D0';
+    else if (dPlus === 1) bucket = 'D1';
+    else if (dPlus === 2) bucket = 'D2';
+    else bucket = 'D3';
+    rows.push({ id:k, base:(r[COL.BASE]||'').trim(), mlp:(r[COL.CARRIER]||'').trim(), drv:(drvOf(r)||'').toString().trim(), desp, conc, encRaw, dPlus, pending, bucket });
+  });
+  return rows;
+}
+
+function renderEncerramento() {
+  const all = _encCompute();
+  const counts = { PEND:0, D0:0, D1:0, D2:0, D3:0 };
+  all.forEach(x => counts[x.bucket]++);
+  const total = all.length || 1;
+  const defs = [
+    { key:'PEND', label:'Pendentes',       emoji:'⏳', desc:'sem conclusão' },
+    { key:'D0',   label:'Mesmo dia (D+0)', emoji:'✅', desc:'fechou no dia' },
+    { key:'D1',   label:'D+1',             emoji:'🟠', desc:'1 dia depois' },
+    { key:'D2',   label:'D+2',             emoji:'🔴', desc:'2 dias depois' },
+    { key:'D3',   label:'D+3 ou mais',     emoji:'⛔', desc:'3+ dias' },
+  ];
+  const sumEl = document.getElementById('encSummary');
+  if (sumEl) sumEl.innerHTML = defs.map(d => {
+    const c = counts[d.key], pct = (c/total*100).toFixed(1).replace('.',',');
+    const active = encBucketFilter === d.key ? ' enc-card-active' : '';
+    const target = encBucketFilter === d.key ? 'ALL' : d.key;
+    return `<div class="enc-card${active}" onclick="setEncFilter('${target}')">
+      <div class="enc-card-emoji">${d.emoji}</div>
+      <div class="enc-card-val">${c.toLocaleString('pt-BR')}</div>
+      <div class="enc-card-label">${d.label}</div>
+      <div class="enc-card-desc">${pct}% · ${d.desc}</div>
+    </div>`;
+  }).join('');
+  const fbEl = document.getElementById('encFilterBtns');
+  if (fbEl) {
+    const btns = [['ALL','Todas'],['PEND','Pendentes'],['D0','D+0'],['D1','D+1'],['D2','D+2'],['D3','D+3+']];
+    fbEl.innerHTML = btns.map(([k,l]) => `<button class="chart-btn${encBucketFilter===k?' enc-btn-active':''}" onclick="setEncFilter('${k}')">${l}</button>`).join('');
+  }
+  const q = (document.getElementById('encSearch')?.value||'').toLowerCase();
+  let rows = all;
+  if (encBucketFilter !== 'ALL') rows = rows.filter(x => x.bucket === encBucketFilter);
+  if (q) rows = rows.filter(x => (x.id+' '+x.base+' '+x.mlp+' '+x.drv).toLowerCase().includes(q));
+  const rank = { PEND:99, D3:3, D2:2, D1:1, D0:0 };
+  rows.sort((a,b) => (rank[b.bucket]-rank[a.bucket]));
+  _encRowsFiltered = rows;
+  const tb = document.getElementById('encTblBody');
+  if (tb) {
+    const badge = x => {
+      if (x.pending) return '<span class="pill bad">⏳ Pendente</span>';
+      const lbl = x.dPlus <= 0 ? 'D+0' : 'D+' + x.dPlus;
+      const cls = x.dPlus <= 0 ? 'good' : (x.dPlus >= 2 ? 'bad' : '');
+      return `<span class="pill ${cls}">${lbl}</span>`;
+    };
+    tb.innerHTML = rows.slice(0, 1000).map(x => `<tr>
+      <td>${x.id||'—'}</td><td>${x.base||'—'}</td><td>${x.mlp||'—'}</td><td>${x.drv||'—'}</td>
+      <td>${x.desp||'—'}</td><td>${x.conc||'<span style="color:var(--danger-text)">—</span>'}</td>
+      <td>${x.encRaw !== '' ? x.encRaw : (x.pending ? '—' : (x.dPlus<=0?'D+0':'D+'+x.dPlus))}</td>
+      <td>${badge(x)}</td></tr>`).join('');
+  }
+  const cnt = document.getElementById('encCount');
+  if (cnt) cnt.textContent = `${rows.length.toLocaleString('pt-BR')} rota(s) exibida(s)${rows.length>1000?' (mostrando as 1000 primeiras)':''} · ${all.length.toLocaleString('pt-BR')} rotas no total`;
+  _renderEncDrivers(all);
+}
+
+let _encDrvRanking = [];
+function _renderEncDrivers(all) {
+  const drv = {};
+  all.forEach(x => {
+    const id = (x.drv || '').trim() || '(sem id)';
+    const o = drv[id] || (drv[id] = { id, mlp:{}, base:{}, pend:0, d1:0, d2:0, d3:0, d0:0, total:0 });
+    o.total++;
+    if (x.mlp)  o.mlp[x.mlp]   = (o.mlp[x.mlp]||0)+1;
+    if (x.base) o.base[x.base] = (o.base[x.base]||0)+1;
+    if (x.bucket==='PEND') o.pend++;
+    else if (x.bucket==='D1') o.d1++;
+    else if (x.bucket==='D2') o.d2++;
+    else if (x.bucket==='D3') o.d3++;
+    else o.d0++;
+  });
+  const top = obj => (Object.entries(obj).sort((a,b)=>b[1]-a[1])[0] || ['—'])[0];
+  _encDrvRanking = Object.values(drv).map(o => ({
+    id:o.id, total:o.total, pend:o.pend, d1:o.d1, d2:o.d2, d3:o.d3,
+    tardias:o.pend+o.d1+o.d2+o.d3, mlp:top(o.mlp), base:top(o.base)
+  })).filter(o => o.tardias > 0).sort((a,b) => (b.tardias-a.tardias) || (b.pend-a.pend));
+  const tb = document.getElementById('encDrvBody');
+  if (tb) tb.innerHTML = _encDrvRanking.slice(0,500).map((o,i) => `<tr>
+    <td>${i+1}</td><td>${o.id}</td><td>${o.mlp||'—'}</td><td>${o.base||'—'}</td>
+    <td><strong>${o.tardias}</strong></td>
+    <td>${o.pend ? '<span class="pill bad">'+o.pend+'</span>' : '0'}</td>
+    <td>${o.d1||'0'}</td><td>${o.d2||'0'}</td><td>${o.d3||'0'}</td>
+    <td>${o.total}</td></tr>`).join('');
+  const c = document.getElementById('encDrvCount');
+  if (c) c.textContent = `${_encDrvRanking.length.toLocaleString('pt-BR')} motorista(s) com encerramento tardio ou pendente no recorte`;
+}
+
+function copyEncDrivers() {
+  const r = _encDrvRanking || [];
+  const lines = [];
+  lines.push('🏆 RANKING DRIVERS — ENCERRAMENTO TARDIO (D+ / PENDENTE)');
+  lines.push('────────────────────');
+  if (!r.length) lines.push('Nenhum driver com encerramento tardio no filtro atual.');
+  else r.forEach((o,i) => {
+    const parts = [];
+    if (o.pend) parts.push(`${o.pend} pend.`);
+    if (o.d1)   parts.push(`${o.d1} D+1`);
+    if (o.d2)   parts.push(`${o.d2} D+2`);
+    if (o.d3)   parts.push(`${o.d3} D+3+`);
+    lines.push(`${i+1}. ${o.id} (${o.mlp}) → ${o.tardias} tardia(s): ${parts.join(', ')}`);
+  });
+  document.getElementById('waText').textContent = lines.join('\n');
+  document.getElementById('waBackdrop').classList.add('open');
+}
+
+function copyEncList() {
+  const rows = _encRowsFiltered || [];
+  const nomes = { ALL:'TODAS', PEND:'PENDENTES', D0:'D+0', D1:'D+1', D2:'D+2', D3:'D+3 OU MAIS' };
+  const lines = [];
+  lines.push(`⏱ ROTAS — ENCERRAMENTO (${nomes[encBucketFilter]||encBucketFilter})`);
+  lines.push('────────────────────');
+  if (!rows.length) lines.push('Nenhuma rota no filtro atual.');
+  else rows.forEach((x, i) => lines.push(`${i+1}. ${x.id} · ${x.base||'—'} · ${x.mlp||'—'}${x.pending ? ' · PENDENTE' : ' · D+' + (x.dPlus<=0?0:x.dPlus)}`));
+  document.getElementById('waText').textContent = lines.join('\n');
+  document.getElementById('waBackdrop').classList.add('open');
+}
+
 function showMainTab(id, btn) {
   document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -2705,6 +3187,7 @@ function showMainTab(id, btn) {
   if (id === 'tabUnvisited') renderDetailUV();
   if (id === 'tabCR')        renderDetailCR();
   if (id === 'tabRota')      renderTabRota();
+  if (id === 'tabEncerramento') renderEncerramento();
 }
 
 /* ══════════════════════════════════════════
@@ -2766,32 +3249,63 @@ function rankBadge(i) {
 // Aggregate all filtered data by date and by carrier
 function buildDetailAgg(filtered) {
   const byDate = {}, byCarrier = {};
+  // For DPPH dedup: track seen routeIds per date-bucket and per carrier
+  const dpphRoutesByDate = {}, dpphRoutesByCarrier = {};
+
   filtered.forEach(r => {
     const d = (r[COL.DATA]||'').trim();
     const c = (r[COL.CARRIER]||'N/D').trim();
     const desp = n(r[COL.DESPACHADOS]), entr = n(r[COL.ENTREGUES]);
-    const dpphV = n(r[COL.DPPH]);
     const orhcV = COL.ORHC ? r[COL.ORHC] : '';
     const uvV   = n(r[COL.UNVISITED]);
     const pacV  = COL.QTDE_PACOTES ? n(r[COL.QTDE_PACOTES]) : desp;
     const clV   = (COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim() !== '') ? 1 : 0;
     const sem   = (r[COL.SEMANA]||'').trim();
+    const rid   = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    const orhHours = COL.ORH_HOURS ? n(r[COL.ORH_HOURS]) : 0;
 
     [d, '__all__'].forEach(k => {
-      if (!byDate[k]) byDate[k] = { desp:0, entr:0, dpphSum:0, dpphCnt:0, orhcOK:0, orhcTotal:0, uv:0, pac:0, claims:0, sem, ins:{} };
+      if (!byDate[k]) {
+        byDate[k] = { desp:0, entr:0, dpphSum:0, dpphCnt:0, orhcOK:0, orhcTotal:0, uv:0, pac:0, claims:0, sem, ins:{} };
+        dpphRoutesByDate[k] = new Map();
+      }
       byDate[k].desp += desp; byDate[k].entr += entr;
-      if (dpphV > 0) { byDate[k].dpphSum += dpphV; byDate[k].dpphCnt++; }
       if (orhcV !== '' && orhcV !== undefined) { byDate[k].orhcTotal++; if(n(orhcV)===1) byDate[k].orhcOK++; }
       byDate[k].uv += uvV; byDate[k].pac += pacV; byDate[k].claims += clV;
       INS_COLS.forEach(col => { byDate[k].ins[col.key] = (byDate[k].ins[col.key]||0) + n(r[col.key]); });
+      // DPPH dedup by route
+      if (rid && !dpphRoutesByDate[k].has(rid)) {
+        dpphRoutesByDate[k].set(rid, { entr: n(r[COL.ENTREGUES]), hours: orhHours });
+      }
     });
-    if (!byCarrier[c]) byCarrier[c] = { desp:0, entr:0, dpphSum:0, dpphCnt:0, orhcOK:0, orhcTotal:0, uv:0, pac:0, claims:0, rotas:0, ins:{} };
+
+    if (!byCarrier[c]) {
+      byCarrier[c] = { desp:0, entr:0, dpphSum:0, dpphCnt:0, orhcOK:0, orhcTotal:0, uv:0, pac:0, claims:0, rotas:0, ins:{} };
+      dpphRoutesByCarrier[c] = new Map();
+    }
     byCarrier[c].desp += desp; byCarrier[c].entr += entr; byCarrier[c].rotas++;
-    if (dpphV > 0) { byCarrier[c].dpphSum += dpphV; byCarrier[c].dpphCnt++; }
     if (orhcV !== '' && orhcV !== undefined) { byCarrier[c].orhcTotal++; if(n(orhcV)===1) byCarrier[c].orhcOK++; }
     byCarrier[c].uv += uvV; byCarrier[c].pac += pacV; byCarrier[c].claims += clV;
     INS_COLS.forEach(col => { byCarrier[c].ins[col.key] = (byCarrier[c].ins[col.key]||0) + n(r[col.key]); });
+    if (rid && !dpphRoutesByCarrier[c].has(rid)) {
+      dpphRoutesByCarrier[c].set(rid, { entr: n(r[COL.ENTREGUES]), hours: orhHours });
+    }
   });
+
+  // Consolidate DPPH: sum(entr) / sum(hours) over unique routes
+  function consolidateDpph(agg, routesMap) {
+    Object.keys(agg).forEach(k => {
+      const routes = routesMap[k];
+      if (!routes) return;
+      let s = 0, h = 0, cnt = 0;
+      routes.forEach(v => { s += v.entr; h += v.hours; cnt++; });
+      agg[k].dpphSum = h > 0 ? s / h : 0; // ratio stored in dpphSum
+      agg[k].dpphCnt = cnt;
+    });
+  }
+  consolidateDpph(byDate, dpphRoutesByDate);
+  consolidateDpph(byCarrier, dpphRoutesByCarrier);
+
   const dates = Object.keys(byDate).filter(k=>k!=='__all__').sort();
   return { byDate, byCarrier, dates, all: byDate['__all__'] || { desp:0,entr:0,dpphSum:0,dpphCnt:0,orhcOK:0,orhcTotal:0,uv:0,pac:0,claims:0,ins:{} } };
 }
@@ -2814,20 +3328,38 @@ function parseDateBR(s) {
 // Groups rawData by semana → date → aggregated metrics
 function buildSemByDate(filtered) {
   const semMap = {}; // semana -> { date -> { desp, entr, orhcOK, orhcTotal, dpphSum, dpphCnt, uv, pac, claims } }
+  const dpphRoutes = {}; // "sem|date" -> Map of routeId -> {entr, hours}
   filtered.forEach(r => {
     const sem = (r[COL.SEMANA]||'').trim();
     const d   = (r[COL.DATA]||'').trim();
     if (!sem || !d) return;
     if (!semMap[sem]) semMap[sem] = {};
-    if (!semMap[sem][d]) semMap[sem][d] = { desp:0,entr:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,rotas:0 };
+    if (!semMap[sem][d]) { semMap[sem][d] = { desp:0,entr:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,rotas:0 }; }
     const a = semMap[sem][d];
+    const key = sem+'|'+d;
+    if (!dpphRoutes[key]) dpphRoutes[key] = new Map();
     a.rotas++;
     a.desp += n(r[COL.DESPACHADOS]); a.entr += n(r[COL.ENTREGUES]);
     if (COL.ORHC && r[COL.ORHC]!=='' && r[COL.ORHC]!==undefined) { a.orhcTotal++; if(n(r[COL.ORHC])===1) a.orhcOK++; }
-    const dpV = n(r[COL.DPPH]); if(dpV>0){a.dpphSum+=dpV;a.dpphCnt++;}
+    const rid = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    if (rid && !dpphRoutes[key].has(rid)) {
+      dpphRoutes[key].set(rid, { entr: n(r[COL.ENTREGUES]), hours: COL.ORH_HOURS ? n(r[COL.ORH_HOURS]) : 0 });
+    }
     a.uv += n(r[COL.UNVISITED]);
     a.pac += COL.QTDE_PACOTES ? n(r[COL.QTDE_PACOTES]) : n(r[COL.DESPACHADOS]);
     a.claims += (COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim()!=='') ? 1 : 0;
+  });
+  // Consolidate DPPH per sem|date
+  Object.keys(semMap).forEach(sem => {
+    Object.keys(semMap[sem]).forEach(d => {
+      const key = sem+'|'+d;
+      const routes = dpphRoutes[key];
+      if (!routes) return;
+      let s = 0, h = 0, cnt = 0;
+      routes.forEach(v => { s += v.entr; h += v.hours; cnt++; });
+      semMap[sem][d].dpphSum = h > 0 ? s / h : 0;
+      semMap[sem][d].dpphCnt = cnt;
+    });
   });
   return semMap;
 }
@@ -2920,8 +3452,8 @@ function renderSemVsSemDPPH(semMap, tbodyId) {
   const tbody = document.getElementById(tbodyId); if(!tbody) return;
   tbody.innerHTML = '';
   rows.forEach(row => {
-    const cV = row.cur  ? (row.cur.agg.dpphCnt>0  ? +(row.cur.agg.dpphSum/row.cur.agg.dpphCnt).toFixed(2)   : null) : null;
-    const pV = row.prev ? (row.prev.agg.dpphCnt>0 ? +(row.prev.agg.dpphSum/row.prev.agg.dpphCnt).toFixed(2) : null) : null;
+    const cV = row.cur  ? (row.cur.agg.dpphCnt>0  ? +row.cur.agg.dpphSum.toFixed(2)  : null) : null;
+    const pV = row.prev ? (row.prev.agg.dpphCnt>0 ? +row.prev.agg.dpphSum.toFixed(2) : null) : null;
     const delta = cV!==null && pV!==null ? cV - pV : null;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -3349,7 +3881,7 @@ function renderDetailORHC() {
 function renderDetailDPPH() {
   const filtered = getFiltered();
   const { byDate, byCarrier, dates, all } = buildDetailAgg(filtered);
-  const dpph = all.dpphCnt > 0 ? +(all.dpphSum/all.dpphCnt).toFixed(2) : 0;
+  const dpph = all.dpphCnt > 0 ? +all.dpphSum.toFixed(2) : 0;
   const alertEl = document.getElementById('detAlertDPPH');
   alertEl.className = 'det-alert ' + (dpph >= 12.10 ? 'good' : 'bad');
   alertEl.innerHTML = dpph >= 12.10
@@ -3362,7 +3894,7 @@ function renderDetailDPPH() {
     <div class="detail-kpi dk-orange"><label>Gap vs Meta</label><div class="dk-val ${dpph>=12.10?'':'dk-red'}">${dpph>=12.10?'+':''}${fmtPt(dpph-12.10)}</div><div class="dk-sub">p.p.</div></div>
   `;
 
-  const dpphTrend = dates.map(d => byDate[d].dpphCnt>0 ? +(byDate[d].dpphSum/byDate[d].dpphCnt).toFixed(2) : null);
+  const dpphTrend = dates.map(d => byDate[d].dpphCnt>0 ? +byDate[d].dpphSum.toFixed(2) : null);
   destroyDetChart('detChartDPPHTrend');
   detCharts['detChartDPPHTrend'] = new Chart(document.getElementById('detChartDPPHTrend'), {
     type:'line',
@@ -3374,11 +3906,11 @@ function renderDetailDPPH() {
   });
 
   const carriers = Object.keys(byCarrier).sort((a,b) => {
-    const va = byCarrier[a].dpphCnt>0?byCarrier[a].dpphSum/byCarrier[a].dpphCnt:0;
-    const vb = byCarrier[b].dpphCnt>0?byCarrier[b].dpphSum/byCarrier[b].dpphCnt:0;
+    const va = byCarrier[a].dpphSum;
+    const vb = byCarrier[b].dpphSum;
     return vb - va;
   });
-  const dpphValsC = carriers.map(c => byCarrier[c].dpphCnt>0 ? +(byCarrier[c].dpphSum/byCarrier[c].dpphCnt).toFixed(2) : 0);
+  const dpphValsC = carriers.map(c => +(byCarrier[c].dpphSum).toFixed(2));
   destroyDetChart('detChartDPPHMlp');
   detCharts['detChartDPPHMlp'] = new Chart(document.getElementById('detChartDPPHMlp'), {
     type:'bar',
@@ -3392,9 +3924,9 @@ function renderDetailDPPH() {
   });
 
   const tbody = document.getElementById('detTblDPPHBody'); tbody.innerHTML = '';
-  const sortedC = [...carriers].sort((a,b) => { const va=byCarrier[a].dpphCnt>0?byCarrier[a].dpphSum/byCarrier[a].dpphCnt:0; const vb=byCarrier[b].dpphCnt>0?byCarrier[b].dpphSum/byCarrier[b].dpphCnt:0; return va-vb; });
+  const sortedC = [...carriers].sort((a,b) => byCarrier[a].dpphSum - byCarrier[b].dpphSum);
   sortedC.forEach((c,i) => {
-    const d = byCarrier[c]; const v = d.dpphCnt>0 ? +(d.dpphSum/d.dpphCnt).toFixed(2) : 0; const gap = (v-12.10).toFixed(2);
+    const d = byCarrier[c]; const v = +d.dpphSum.toFixed(2); const gap = (v-12.10).toFixed(2);
     tbody.innerHTML += `<tr><td>${rankBadge(i)}</td><td><strong>${c}</strong></td><td>${d.rotas.toLocaleString('pt-BR')}</td>
       <td><span class="pill ${v>=12.10?'good':'bad'}">${fmtPt(v)}</span></td>
       <td style="color:${v>=12.10?'var(--success)':'var(--danger)'};font-weight:600">${v>=12.10?'+':''}${gap}</td>
@@ -3403,7 +3935,7 @@ function renderDetailDPPH() {
 
   const tbody2 = document.getElementById('detTblDPPHDiaBody'); tbody2.innerHTML = '';
   dates.forEach(d => {
-    const v2 = byDate[d]; const dV = v2.dpphCnt>0 ? +(v2.dpphSum/v2.dpphCnt).toFixed(2) : 0;
+    const v2 = byDate[d]; const dV = +v2.dpphSum.toFixed(2);
     const sem = (rawData.find(r=>(r[COL.DATA]||'').trim()===d)||{})[COL.SEMANA]||'';
     tbody2.innerHTML += `<tr><td>${d}</td><td>${sem}</td><td>${v2.dpphCnt.toLocaleString('pt-BR')}</td>
       <td><span class="pill ${dV>=12.10?'good':'bad'}">${fmtPt(dV)}</span></td>
@@ -3558,7 +4090,7 @@ function computeReincCR(filtered) {
 }
 
 /* Relatório WhatsApp — motoristas reincidentes em reclamações */
-/* Extrato diário CR — SVC, XPT (EAL1–EAL4, ECE1) e NEX/Extras (BRNAL). Dia = data de conclusão da rota; padrão D-3 pela data de hoje */
+/* Extrato diário CR — SVC, XPT, DC (Agências Kangu, BRD) e NEX/Extras (BRN). Dia = data de conclusão da rota; padrão D-3 pela data de hoje */
 const EXTRATO_XPT_BASES = ['EAL1','EAL2','EAL3','EAL4','ECE1'];
 const EXTRATO_LAG_DAYS = 3;
 function extratoGrupo(base) {
@@ -3573,6 +4105,7 @@ function extratoGrupo(base) {
 // que nas rotas D+1 difere da data de despacho. Detecta sozinha; cai em COL.DATA se não achar.
 let _extDataFimCol, _extDataFimRef;
 function extratoDataCol() {
+  if (COL.DATA_FIM) return COL.DATA_FIM;   // coluna de conclusão explícita (DATA_FIM)
   if (_extDataFimRef === rawData) return _extDataFimCol || COL.DATA;
   _extDataFimRef = rawData; _extDataFimCol = null;
   try {
@@ -3823,6 +4356,29 @@ const ROTA_PAGE_SIZE = 100;
 let rotaSorted = [];
 
 function renderTabRota() {
+  // Build insucesso column headers dynamically based on which cols have data
+  const allFiltered = getFiltered();
+  const activeInsCols = INS_COLS.filter(col => allFiltered.some(r => n(r[col.key]) > 0));
+  const insHeaderEl = document.getElementById('rotaInsTblHeaders');
+  const insSepEl    = document.getElementById('rotaInsTblSep');
+  if (insHeaderEl) {
+    // Replace placeholder th with one th per active insucesso col
+    const parentTr = insHeaderEl.parentElement;
+    // Remove old dynamic ths (keep the separator)
+    parentTr.querySelectorAll('.ins-dyn-th').forEach(el => el.remove());
+    insHeaderEl.remove();
+    if (insSepEl) insSepEl.style.display = activeInsCols.length ? '' : 'none';
+    activeInsCols.forEach((col, idx) => {
+      const th = document.createElement('th');
+      th.className = 'ins-dyn-th';
+      th.style.cssText = 'white-space:nowrap;font-size:10px;' + (idx===0?'border-left:2px solid var(--border-strong)':'');
+      th.setAttribute('onclick', `sortDtbl('detTblRota',${15+idx})`);
+      th.textContent = col.label;
+      parentTr.appendChild(th);
+    });
+  }
+  window._rotaActiveInsCols = activeInsCols;
+
   const filtered = getFiltered();
   const q = (document.getElementById('rotaSearch')?.value||'').toLowerCase();
   const insKeys = msState.RotaIns.size ? INS_COLS.filter(c => msState.RotaIns.has(c.label)).map(c => c.key) : [];
@@ -3867,6 +4423,180 @@ function renderTabRota() {
 
   const noteEl = document.getElementById('rotaCount');
   if (noteEl) noteEl.textContent = `${rotaSorted.length.toLocaleString('pt-BR')} rotas encontradas`;
+
+  renderDriverInsChart();
+  renderRouteInsChart();
+  updateRotaTableHeight();
+}
+
+let _driverInsChart = null, _routeInsChart = null;
+let _driverInsMin = false, _routeInsMin = false;
+
+// Agrega insucesso (dedup por rota) por uma chave (driver ou rota); respeita filtro de motivo
+function _insAgg(keyFn) {
+  const filtered = getFiltered();
+  const selInsKeys   = msState.RotaIns.size ? INS_COLS.filter(c => msState.RotaIns.has(c.label)).map(c => c.key)   : [];
+  const selInsLabels = msState.RotaIns.size ? INS_COLS.filter(c => msState.RotaIns.has(c.label)).map(c => c.label) : [];
+  const map = new Map();
+  const seenRoutes = new Set();
+  filtered.forEach(r => {
+    const rid = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    if (rid && seenRoutes.has(rid)) return;
+    if (rid) seenRoutes.add(rid);
+    const k = keyFn(r, rid);
+    if (!k) return;
+    const ins = selInsKeys.length
+      ? selInsKeys.reduce((s,kk) => s + n(r[kk]), 0)
+      : Math.max(0, n(r[COL.DESPACHADOS]) - n(r[COL.ENTREGUES]));
+    map.set(k, (map.get(k)||0) + ins);
+  });
+  const sorted = [...map.entries()].filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  return { sorted, selInsLabels };
+}
+const _drvKey = r => ((COL.DRIVER && r[COL.DRIVER]) || r['SHP_LG_DRIVER_ID'] || r['ID_DRIVER'] || '').toString().trim();
+const _rotKey = (r, rid) => (rid || r['SHP_LG_ROUTE_ID'] || r['ID_ROTA'] || '').toString().trim();
+
+function _buildInsBar(canvasId, entries, meta) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  if (!entries.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return null; }
+  const labels = entries.map(([k]) => k);
+  const data   = entries.map(([,v]) => v);
+  return new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: meta, data, backgroundColor: data.map((v,i) => i < 3 ? '#d03b3b' : '#e8836e'), borderRadius: 4, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      onClick: (evt, els, chart) => {
+        if (!els.length) return;
+        const id = chart.data.labels[els[0].index];
+        showIdCopy(String(id));
+      },
+      onHover: (evt, els) => { if (evt.native && evt.native.target) evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} insucessos` } },
+        datalabels: { anchor:'end', align:'end', formatter: v => v, color:'#2a2926', font:{size:9,weight:'700'}, offset:2, clip:false }
+      },
+      layout: { padding: { right: 36, top: 4 } },
+      scales: {
+        x: { ticks: { color:'#45433f', font:{size:10} }, grid: { color:'rgba(128,128,128,0.12)' } },
+        y: { ticks: { color:'#45433f', font:{size:10} }, grid: { display:false } }
+      }
+    }
+  });
+}
+
+function renderDriverInsChart() {
+  const topN = parseInt(document.getElementById('driverInsTopN')?.value || '10');
+  const { sorted, selInsLabels } = _insAgg(_drvKey);
+  const titleEl = document.getElementById('driverInsChartTitle');
+  const subEl   = document.getElementById('driverInsChartSub');
+  if (titleEl) titleEl.textContent = `Top ${topN} drivers por Insucessos`;
+  if (subEl && !_driverInsMin) subEl.textContent = (selInsLabels.length ? `Motivo filtrado: ${selInsLabels.join(', ')}` : 'Total de insucessos por motorista') + ' · clique numa barra p/ copiar o ID';
+  if (_driverInsChart) { _driverInsChart.destroy(); _driverInsChart = null; }
+  if (_driverInsMin) return;
+  if (!sorted.length && subEl) subEl.textContent = 'Sem dados de driver disponíveis';
+  const meta = selInsLabels.length ? selInsLabels.join(', ') : 'Total de insucessos';
+  _driverInsChart = _buildInsBar('chartDriverIns', sorted.slice(0, topN), meta);
+}
+
+function renderRouteInsChart() {
+  const topN = parseInt(document.getElementById('routeInsTopN')?.value || '10');
+  const { sorted, selInsLabels } = _insAgg(_rotKey);
+  const titleEl = document.getElementById('routeInsChartTitle');
+  const subEl   = document.getElementById('routeInsChartSub');
+  if (titleEl) titleEl.textContent = `Top ${topN} rotas por Insucessos`;
+  if (subEl && !_routeInsMin) subEl.textContent = (selInsLabels.length ? `Motivo filtrado: ${selInsLabels.join(', ')}` : 'Total de insucessos por rota') + ' · clique numa barra p/ copiar o ID';
+  if (_routeInsChart) { _routeInsChart.destroy(); _routeInsChart = null; }
+  if (_routeInsMin) return;
+  if (!sorted.length && subEl) subEl.textContent = 'Sem dados de rota disponíveis';
+  const meta = selInsLabels.length ? selInsLabels.join(', ') : 'Total de insucessos';
+  _routeInsChart = _buildInsBar('chartRouteIns', sorted.slice(0, topN), meta);
+}
+
+function copyText(str) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(str).catch(() => { _copyFallback(str); });
+  }
+  _copyFallback(str);
+  return Promise.resolve();
+}
+function _copyFallback(str) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = str; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  } catch (e) {}
+}
+function showCopyToast(msg) {
+  let t = document.getElementById('copyToast');
+  if (!t) {
+    t = document.createElement('div'); t.id = 'copyToast';
+    t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#2a2926;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 18px rgba(0,0,0,0.25);opacity:0;transition:opacity .18s;pointer-events:none';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._to);
+  t._to = setTimeout(() => { t.style.opacity = '0'; }, 1400);
+}
+// Popup de cópia de ID: mostra o ID já selecionado (Ctrl+C funciona sempre) + botão copiar
+function showIdCopy(id) {
+  let ov = document.getElementById('idCopyOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'idCopyOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35)';
+    ov.innerHTML =
+      '<div style="background:var(--surface,#fff);border:0.5px solid var(--border,#ddd);border-radius:12px;padding:18px 20px;min-width:250px;box-shadow:0 12px 44px rgba(0,0,0,0.32);text-align:center">'
+      + '<div style="font-size:12px;color:var(--text-muted,#777);margin-bottom:8px;font-weight:600">Copiar ID</div>'
+      + '<input id="idCopyInput" readonly style="width:100%;box-sizing:border-box;font-size:18px;font-weight:700;text-align:center;padding:9px;border:1px solid var(--border-strong,#bbb);border-radius:8px;margin-bottom:10px;background:var(--surface-1,#f7f7f5);color:var(--text-primary,#1a1a1a)">'
+      + '<div style="display:flex;gap:8px;justify-content:center">'
+      + '<button id="idCopyBtn" style="padding:6px 14px;border:none;border-radius:8px;background:#FFE600;color:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer">📋 Copiar</button>'
+      + '<button id="idCopyClose" style="padding:6px 14px;border:0.5px solid var(--border-strong,#bbb);border-radius:8px;background:var(--surface-1,#f7f7f5);color:var(--text-secondary,#555);font-size:12px;cursor:pointer">Fechar</button>'
+      + '</div>'
+      + '<div id="idCopyMsg" style="font-size:11px;color:#16a34a;margin-top:8px;height:14px"></div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+    ov.querySelector('#idCopyClose').onclick = () => { ov.style.display = 'none'; };
+    ov.querySelector('#idCopyBtn').onclick = () => {
+      const inp = ov.querySelector('#idCopyInput'), msg = ov.querySelector('#idCopyMsg');
+      inp.focus(); inp.select(); inp.setSelectionRange(0, inp.value.length);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(inp.value).then(() => {}).catch(() => {}); }
+      msg.textContent = ok ? '✅ Copiado!' : 'Selecione e use Ctrl+C / ⌘+C';
+    };
+  }
+  const inp = ov.querySelector('#idCopyInput');
+  inp.value = id;
+  ov.querySelector('#idCopyMsg').textContent = '';
+  ov.style.display = 'flex';
+  setTimeout(() => { inp.focus(); inp.select(); inp.setSelectionRange(0, inp.value.length); }, 40);
+}
+
+function toggleInsChart(tipo) {
+  const isDrv = tipo === 'driver';
+  if (isDrv) _driverInsMin = !_driverInsMin; else _routeInsMin = !_routeInsMin;
+  const min  = isDrv ? _driverInsMin : _routeInsMin;
+  const wrap = document.getElementById(isDrv ? 'driverInsCanvasWrap' : 'routeInsCanvasWrap');
+  const sub  = document.getElementById(isDrv ? 'driverInsChartSub'  : 'routeInsChartSub');
+  const btn  = document.getElementById(isDrv ? 'driverInsMinBtn'    : 'routeInsMinBtn');
+  if (wrap) wrap.style.display = min ? 'none' : '';
+  if (sub)  sub.style.display  = min ? 'none' : '';
+  if (btn)  btn.textContent    = min ? '▸ Expandir' : '▾ Minimizar';
+  if (!min) { if (isDrv) renderDriverInsChart(); else renderRouteInsChart(); }
+  updateRotaTableHeight();
+}
+
+function updateRotaTableHeight() {
+  const wrap = document.getElementById('rotaTableWrap');
+  if (!wrap) return;
+  const minCount = (_driverInsMin ? 1 : 0) + (_routeInsMin ? 1 : 0);
+  wrap.style.maxHeight = (560 + minCount * 320) + 'px';
 }
 
 function renderRotaPage() {
@@ -3876,6 +4606,8 @@ function renderRotaPage() {
   const rotaCol  = COL.ROUTE_ID || 'SHP_LG_ROUTE_ID';
   const selInsKeys = msState.RotaIns.size ? INS_COLS.filter(c => msState.RotaIns.has(c.label)).map(c => c.key) : [];
   const selInsLabels = msState.RotaIns.size ? INS_COLS.filter(c => msState.RotaIns.has(c.label)).map(c => c.label) : [];
+  const drvOf  = r => (COL.DRIVER && r[COL.DRIVER]) || r['SHP_LG_DRIVER_ID'] || r['ID_DRIVER'] || '';
+  const baseOf = r => COL.BASE ? (r[COL.BASE]||'').trim() : '';
   const fragment = document.createDocumentFragment();
 
   for (let i = start; i < end; i++) {
@@ -3885,12 +4617,18 @@ function renderRotaPage() {
     const ins   = selInsKeys.length ? selInsKeys.reduce((s,k)=>s+n(r[k]),0) : insTotal;
     const dsR   = desp > 0 ? pct2(entr, desp) : null;
     const orhcR = r[COL.ORHC] !== undefined && r[COL.ORHC] !== '' ? n(r[COL.ORHC]) : null;
-    const dpphR = n(r[COL.DPPH]) > 0 ? n(r[COL.DPPH]).toFixed(2) : '—';
+    const dpphR = (COL.ORH_HOURS && n(r[COL.ORH_HOURS]) > 0) ? (n(r[COL.ENTREGUES]) / n(r[COL.ORH_HOURS])).toFixed(2) : (n(r[COL.DPPH]) > 0 ? n(r[COL.DPPH]).toFixed(2) : '—');
     const uvR   = n(r[COL.UNVISITED]);
     const crR   = (r.__claims != null) ? r.__claims : ((COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim() !== '') ? 1 : 0);
     const insBreak = INS_COLS.map(c => ({ label:c.label, v:n(r[c.key]) })).filter(x => x.v > 0).sort((a,b) => b.v - a.v);
     let insTitle = insBreak.length ? 'Insucessos por motivo:\n' + insBreak.map(x => `• ${x.label}: ${x.v}`).join('\n') : 'Sem detalhamento por motivo';
     if (selInsLabels.length) insTitle = `Mostrando: ${selInsLabels.join(', ')} = ${ins}  (total da rota: ${insTotal})\n` + insTitle;
+
+    const activeInsCols = window._rotaActiveInsCols || [];
+    const insCells = activeInsCols.map((col, idx) => {
+      const v = n(r[col.key]);
+      return `<td style="${idx===0?'border-left:2px solid var(--border-strong);':''}">${v > 0 ? `<span style="color:var(--danger);font-weight:700">${v}</span>` : '—'}</td>`;
+    }).join('');
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -3898,7 +4636,9 @@ function renderRotaPage() {
       <td style="font-family:monospace;font-size:10px">${r[rotaCol]||'—'}</td>
       <td>${(r[COL.DATA]||'').trim()}</td>
       <td>${(r[COL.SEMANA]||'').trim()}</td>
+      <td>${baseOf(r)||'—'}</td>
       <td>${(r[COL.CARRIER]||'').trim()}</td>
+      <td style="font-family:monospace;font-size:10px">${drvOf(r)||'—'}</td>
       <td>${desp.toLocaleString('pt-BR')}</td>
       <td>${entr.toLocaleString('pt-BR')}</td>
       <td title="${insTitle}" style="color:${ins>0?'var(--danger)':'var(--success)'};font-weight:${ins>0?700:400};cursor:help">${ins.toLocaleString('pt-BR')}</td>
@@ -3906,7 +4646,8 @@ function renderRotaPage() {
       <td>${orhcR!==null?`<span class="pill ${orhcR===1?'good':'bad'}">${orhcR===1?'OK':'Não OK'}</span>`:'—'}</td>
       <td>${dpphR}</td>
       <td>${uvR>0?`<span style="color:var(--danger);font-weight:700">${uvR}</span>`:'-'}</td>
-      <td>${crR>0?`<span style="color:var(--danger);font-weight:700">${crR}</span>`:'—'}</td>`;
+      <td>${crR>0?`<span style="color:var(--danger);font-weight:700">${crR}</span>`:'—'}</td>
+      ${insCells}`;
     fragment.appendChild(tr);
   }
   tbody.appendChild(fragment);
@@ -3965,29 +4706,58 @@ function renderPivotTable() {
 
   // ── Aggregate by date ──
   const byDate = {};
+  const _pivotDpphRoutes = {}; // date -> Map(routeId -> {entr, hours})
   filtered.forEach(r => {
     const d = (r[COL.DATA]||'').trim(); if(!d) return;
-    if (!byDate[d]) byDate[d] = { desp:0,entr:0,rotas:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,ins:0,orh12:0 };
+    if (!byDate[d]) { byDate[d] = { desp:0,entr:0,rotas:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,ins:0,orh12:0 }; _pivotDpphRoutes[d] = new Map(); }
     const a = byDate[d];
     a.rotas++;
     const desp=n(r[COL.DESPACHADOS]),entr=n(r[COL.ENTREGUES]);
     a.desp+=desp; a.entr+=entr; a.ins+=(desp-entr);
     if(COL.ORHC&&r[COL.ORHC]!==''&&r[COL.ORHC]!==undefined){a.orhcTotal++;if(n(r[COL.ORHC])===1)a.orhcOK++;}
-    const dv=n(r[COL.DPPH]);if(dv>0){a.dpphSum+=dv;a.dpphCnt++;}
+    const rid = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    if (rid && !_pivotDpphRoutes[d].has(rid)) {
+      _pivotDpphRoutes[d].set(rid, { entr: n(r[COL.ENTREGUES]), hours: COL.ORH_HOURS ? n(r[COL.ORH_HOURS]) : 0 });
+    }
     a.uv+=n(r[COL.UNVISITED]);
     a.pac+=COL.QTDE_PACOTES?n(r[COL.QTDE_PACOTES]):desp;
     a.claims+=(COL.ID_COM_RECLAMO&&(r[COL.ID_COM_RECLAMO]||'').trim()!=='')?1:0;
     if(COL.ORH_HOURS&&n(r[COL.ORH_HOURS])>12) a.orh12++;
   });
+  // Consolidate pivot DPPH per date
+  Object.keys(byDate).forEach(d => {
+    let s=0,h=0,cnt=0;
+    (_pivotDpphRoutes[d]||new Map()).forEach(v=>{s+=v.entr;h+=v.hours;cnt++;});
+    byDate[d].dpphSum = h>0?s/h:0;
+    byDate[d].dpphCnt = cnt;
+  });
 
-  // ── Aggregate by semana ──
+  // ── Aggregate by semana (re-deduplicate DPPH, can't just sum ratios) ──
   const bySem = {};
+  const _semDpphRoutes = {};
   semSet.forEach(s => {
     bySem[s] = { desp:0,entr:0,rotas:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,ins:0,orh12:0 };
-    (semDates[s]||[]).forEach(d => {
-      if(!byDate[d]) return;
-      Object.keys(bySem[s]).forEach(k => bySem[s][k]+=byDate[d][k]||0);
-    });
+    _semDpphRoutes[s] = new Map();
+  });
+  filtered.forEach(r => {
+    const s = (r[COL.SEMANA]||'').trim(); if(!s||!bySem[s]) return;
+    const a = bySem[s];
+    a.rotas++;
+    const desp=n(r[COL.DESPACHADOS]),entr=n(r[COL.ENTREGUES]);
+    a.desp+=desp; a.entr+=entr; a.ins+=(desp-entr);
+    if(COL.ORHC&&r[COL.ORHC]!==''&&r[COL.ORHC]!==undefined){a.orhcTotal++;if(n(r[COL.ORHC])===1)a.orhcOK++;}
+    a.uv+=n(r[COL.UNVISITED]);
+    a.pac+=COL.QTDE_PACOTES?n(r[COL.QTDE_PACOTES]):desp;
+    a.claims+=(COL.ID_COM_RECLAMO&&(r[COL.ID_COM_RECLAMO]||'').trim()!=='')?1:0;
+    if(COL.ORH_HOURS&&n(r[COL.ORH_HOURS])>12) a.orh12++;
+    const rid = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    if (rid && !_semDpphRoutes[s].has(rid)) {
+      _semDpphRoutes[s].set(rid, { entr: n(r[COL.ENTREGUES]), hours: COL.ORH_HOURS ? n(r[COL.ORH_HOURS]) : 0 });
+    }
+  });
+  semSet.forEach(s => {
+    let sv=0,sh=0,sc=0; _semDpphRoutes[s].forEach(v=>{sv+=v.entr;sh+=v.hours;sc++;});
+    bySem[s].dpphSum = sh>0?sv/sh:0; bySem[s].dpphCnt = sc;
   });
 
   // ── KPI extractor ──
@@ -3996,7 +4766,7 @@ function renderPivotTable() {
     switch(kpi) {
       case 'DS':       return agg.desp>0 ? agg.entr/agg.desp*100 : null;
       case 'ORHC':     return agg.orhcTotal>0 ? agg.orhcOK/agg.orhcTotal*100 : null;
-      case 'DPPH':     return agg.dpphCnt>0 ? agg.dpphSum/agg.dpphCnt : null;
+      case 'DPPH':     return agg.dpphCnt>0 ? agg.dpphSum : null;
       case 'UV':       return agg.pac>0 ? agg.uv/agg.pac*100 : null;
       case 'CR':       return agg.desp>0 ? agg.claims/agg.desp*100 : null;
       case 'Rotas':    return agg.rotas;
@@ -4209,42 +4979,51 @@ function gerarRelatorio(tipo) {
 
   // Build per-base index
   const byBase = {};
+  const _baseDpphRoutes = {};
   filtered.forEach(r => {
     if (!COL.BASE) return;
     const b = (r[COL.BASE]||'N/D').trim();
-    if (!byBase[b]) byBase[b] = {desp:0,entr:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,ins:{}};
+    if (!byBase[b]) { byBase[b] = {desp:0,entr:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0,uv:0,pac:0,claims:0,ins:{}}; _baseDpphRoutes[b]=new Map(); }
     const a = byBase[b];
     a.desp+=n(r[COL.DESPACHADOS]); a.entr+=n(r[COL.ENTREGUES]);
     if(COL.ORHC&&r[COL.ORHC]!==''&&r[COL.ORHC]!==undefined){a.orhcTotal++;if(n(r[COL.ORHC])===1)a.orhcOK++;}
-    const dv=n(r[COL.DPPH]);if(dv>0){a.dpphSum+=dv;a.dpphCnt++;}
+    const rid=COL.ROUTE_ID?(r[COL.ROUTE_ID]||'').toString().trim():'';
+    if(rid&&!_baseDpphRoutes[b].has(rid)) _baseDpphRoutes[b].set(rid,{entr:n(r[COL.ENTREGUES]),hours:COL.ORH_HOURS?n(r[COL.ORH_HOURS]):0});
     a.uv+=n(r[COL.UNVISITED]); a.pac+=COL.QTDE_PACOTES?n(r[COL.QTDE_PACOTES]):n(r[COL.DESPACHADOS]);
     a.claims+=(COL.ID_COM_RECLAMO&&(r[COL.ID_COM_RECLAMO]||'').trim()!=='')?1:0;
     INS_COLS.forEach(col => { a.ins[col.key]=(a.ins[col.key]||0)+n(r[col.key]); });
   });
+  Object.keys(byBase).forEach(b=>{let s=0,h=0,c=0;_baseDpphRoutes[b].forEach(v=>{s+=v.entr;h+=v.hours;c++;});byBase[b].dpphSum=h>0?s/h:0;byBase[b].dpphCnt=c;});
 
   // Build per-carrier-per-base index (para cobrança por base)
   const byCarrierBase = {};
+  const _cbDpphRoutes = {};
   if (COL.BASE) filtered.forEach(r => {
     const c = (r[COL.CARRIER]||'N/D').trim();
     const b = (r[COL.BASE]||'N/D').trim();
     const k = c + '||' + b;
-    if (!byCarrierBase[k]) byCarrierBase[k] = { carrier:c, base:b, desp:0, entr:0, orhcOK:0, orhcTotal:0, dpphSum:0, dpphCnt:0, uv:0, pac:0, claims:0 };
+    if (!byCarrierBase[k]) { byCarrierBase[k] = { carrier:c, base:b, desp:0, entr:0, orhcOK:0, orhcTotal:0, dpphSum:0, dpphCnt:0, uv:0, pac:0, claims:0 }; _cbDpphRoutes[k]=new Map(); }
     const a = byCarrierBase[k];
     a.desp+=n(r[COL.DESPACHADOS]); a.entr+=n(r[COL.ENTREGUES]);
     if(COL.ORHC&&r[COL.ORHC]!==''&&r[COL.ORHC]!==undefined){a.orhcTotal++;if(n(r[COL.ORHC])===1)a.orhcOK++;}
-    const dv=n(r[COL.DPPH]);if(dv>0){a.dpphSum+=dv;a.dpphCnt++;}
+    const rid=COL.ROUTE_ID?(r[COL.ROUTE_ID]||'').toString().trim():'';
+    if(rid&&!_cbDpphRoutes[k].has(rid)) _cbDpphRoutes[k].set(rid,{entr:n(r[COL.ENTREGUES]),hours:COL.ORH_HOURS?n(r[COL.ORH_HOURS]):0});
     a.uv+=n(r[COL.UNVISITED]); a.pac+=COL.QTDE_PACOTES?n(r[COL.QTDE_PACOTES]):n(r[COL.DESPACHADOS]);
     a.claims+=(COL.ID_COM_RECLAMO&&(r[COL.ID_COM_RECLAMO]||'').trim()!=='')?1:0;
   });
+  Object.keys(byCarrierBase).forEach(k=>{let s=0,h=0,c=0;_cbDpphRoutes[k].forEach(v=>{s+=v.entr;h+=v.hours;c++;});byCarrierBase[k].dpphSum=h>0?s/h:0;byCarrierBase[k].dpphCnt=c;});
 
   // Build per-ciclo index
   const byCiclo = {};
+  const _cicloDpphRoutes = {};
   if (COL.CICLO) {
     filtered.forEach(r => {
       const c = (r[COL.CICLO]||'N/D').trim();
-      if (!byCiclo[c]) byCiclo[c] = {dpphSum:0,dpphCnt:0};
-      const dv=n(r[COL.DPPH]);if(dv>0){byCiclo[c].dpphSum+=dv;byCiclo[c].dpphCnt++;}
+      if (!byCiclo[c]) { byCiclo[c] = {dpphSum:0,dpphCnt:0}; _cicloDpphRoutes[c]=new Map(); }
+      const rid=COL.ROUTE_ID?(r[COL.ROUTE_ID]||'').toString().trim():'';
+      if(rid&&!_cicloDpphRoutes[c].has(rid)) _cicloDpphRoutes[c].set(rid,{entr:n(r[COL.ENTREGUES]),hours:COL.ORH_HOURS?n(r[COL.ORH_HOURS]):0});
     });
+    Object.keys(byCiclo).forEach(c=>{let s=0,h=0,cnt=0;_cicloDpphRoutes[c].forEach(v=>{s+=v.entr;h+=v.hours;cnt++;});byCiclo[c].dpphSum=h>0?s/h:0;byCiclo[c].dpphCnt=cnt;});
   }
 
   // Top INS cause for an agg object
@@ -4260,18 +5039,20 @@ function gerarRelatorio(tipo) {
   // Top MLP offender per base
   function topMlpForBase(baseName, kpi) {
     const rows = filtered.filter(r => COL.BASE && (r[COL.BASE]||'').trim()===baseName);
-    const byC = {};
+    const byC = {}, _byC_dpphRoutes = {};
     rows.forEach(r => {
       const c=(r[COL.CARRIER]||'N/D').trim();
-      if(!byC[c]) byC[c]={desp:0,entr:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0};
+      if(!byC[c]) { byC[c]={desp:0,entr:0,orhcOK:0,orhcTotal:0,dpphSum:0,dpphCnt:0}; _byC_dpphRoutes[c]=new Map(); }
       byC[c].desp+=n(r[COL.DESPACHADOS]); byC[c].entr+=n(r[COL.ENTREGUES]);
       if(COL.ORHC&&r[COL.ORHC]!==''&&r[COL.ORHC]!==undefined){byC[c].orhcTotal++;if(n(r[COL.ORHC])===1)byC[c].orhcOK++;}
-      const dv=n(r[COL.DPPH]);if(dv>0){byC[c].dpphSum+=dv;byC[c].dpphCnt++;}
+      const rid=COL.ROUTE_ID?(r[COL.ROUTE_ID]||'').toString().trim():'';
+      if(rid&&!_byC_dpphRoutes[c].has(rid)) _byC_dpphRoutes[c].set(rid,{entr:n(r[COL.ENTREGUES]),hours:COL.ORH_HOURS?n(r[COL.ORH_HOURS]):0});
     });
+    Object.keys(byC).forEach(c=>{let s=0,h=0,cnt=0;_byC_dpphRoutes[c].forEach(v=>{s+=v.entr;h+=v.hours;cnt++;});byC[c].dpphSum=h>0?s/h:0;byC[c].dpphCnt=cnt;});
     const list = Object.entries(byC).map(([c,a]) => {
       let v = kpi==='DS'?  (a.desp>0?pct2(a.entr,a.desp):0)
              :kpi==='ORHC'?(a.orhcTotal>0?pct2(a.orhcOK,a.orhcTotal):0)
-             :(a.dpphCnt>0?a.dpphSum/a.dpphCnt:0);
+             :a.dpphSum;
       return {c,v,a};
     }).filter(x => kpi==='DS'?x.v<98.5 : kpi==='ORHC'?x.v<85 : x.v<12.10)
       .sort((a,b)=>a.v-b.v);
@@ -4310,7 +5091,7 @@ function gerarRelatorio(tipo) {
     Object.entries(byCarrier)
       .map(([c,a]) => ({ c, v: a.desp>0?pct2(a.entr,a.desp):0, ins: a.desp-a.entr, a }))
       .filter(x => x.v < 98.5 && x.a.desp > 0)
-      .sort((a,b) => a.v - b.v)
+      .sort((a,b) => b.ins - a.ins)
       .forEach(x => {
         const cause = topInsCause(x.a.ins, x.ins);
         lines.push(`🔴 ${x.c} → ${fmt(x.v)}% | ${x.a.desp.toLocaleString('pt-BR')} desp | ${x.ins.toLocaleString('pt-BR')} ins - Maior causa`);
@@ -4370,7 +5151,7 @@ function gerarRelatorio(tipo) {
     Object.entries(byCarrier)
       .map(([c,a]) => ({ c, v: a.orhcTotal>0?pct2(a.orhcOK,a.orhcTotal):0, perdidas: a.orhcTotal-a.orhcOK }))
       .filter(x => x.v < 85)
-      .sort((a,b) => a.v - b.v)
+      .sort((a,b) => b.perdidas - a.perdidas)
       .forEach(x => {
         lines.push(`🔴 ${x.c} → ${fmt(x.v)}% ${fmt(x.v-85)}pp | ${x.perdidas.toLocaleString('pt-BR')} rotas perdidas`);
       });
@@ -4395,25 +5176,25 @@ function gerarRelatorio(tipo) {
   // DPPH
   // ════════════════════════════════
   else if (tipo === 'DPPH') {
-    const dpph = all.dpphCnt > 0 ? all.dpphSum/all.dpphCnt : 0;
+    const dpph = all.dpphSum; // ratio: sum(entr)/sum(hours), deduped by ROUTE_ID
     const status = dpph >= 12.10 ? '🟢' : '🔴';
     const gap = dpph - 12.10;
     lines.push(`📦 DPPH – ${ctxBase} | ${ctxSem}`);
     lines.push(`Resultado geral: ${fmt(dpph)}${status}${gap<0?fmt(gap):'+'+fmt(gap)} Meta  (meta: 12,10)`);
     // Per date — only show days below meta
-    const badDates = dates.filter(d => byDate[d].dpphCnt>0 && byDate[d].dpphSum/byDate[d].dpphCnt < 12.10);
-    const goodDates = dates.filter(d => byDate[d].dpphCnt>0 && byDate[d].dpphSum/byDate[d].dpphCnt >= 12.10);
+    const badDates = dates.filter(d => byDate[d].dpphCnt>0 && byDate[d].dpphSum < 12.10);
+    const goodDates = dates.filter(d => byDate[d].dpphCnt>0 && byDate[d].dpphSum >= 12.10);
     badDates.forEach(d => {
-      const v = byDate[d].dpphSum/byDate[d].dpphCnt;
+      const v = byDate[d].dpphSum;
       lines.push(`${d} – ${fmt(v)} 🔴`);
     });
-    if (goodDates.length > 0) lines.push(`Demais dias com média acima de ${Math.floor(Math.min(...goodDates.map(d=>byDate[d].dpphSum/byDate[d].dpphCnt)))} pacotes/h`);
+    if (goodDates.length > 0) lines.push(`Demais dias com média acima de ${Math.floor(Math.min(...goodDates.map(d=>byDate[d].dpphSum)))} pacotes/h`);
     // Por Ciclo
     if (COL.CICLO && Object.keys(byCiclo).length > 0) {
       lines.push(`POR CICLO`);
       const goodCiclos = [];
       Object.entries(byCiclo).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([c,a]) => {
-        const v = a.dpphCnt>0 ? a.dpphSum/a.dpphCnt : 0;
+        const v = a.dpphSum;
         if (v >= 12.10) { goodCiclos.push(`${c} (${fmt(v)})`); return; }
         lines.push(`${c} – ${fmt(v)} 🔴`);
       });
@@ -4424,7 +5205,7 @@ function gerarRelatorio(tipo) {
       lines.push(`POR XPT`);
       const goodXpts = [];
       Object.entries(byBase).forEach(([b,a]) => {
-        const v = a.dpphCnt>0 ? a.dpphSum/a.dpphCnt : 0;
+        const v = a.dpphSum;
         if (v <= 0) return;
         if (v >= 12.10) { goodXpts.push(`${b} (${fmt(v)})`); return; }
         lines.push(`🔴 ${b} ${a.dpphCnt} rotas, média de ${fmt(v)})`);
@@ -4434,7 +5215,7 @@ function gerarRelatorio(tipo) {
     // Por MLP ofensores
     lines.push(`POR MLP OFENSORES`);
     Object.entries(byCarrier)
-      .map(([c,a]) => ({ c, v: a.dpphCnt>0?a.dpphSum/a.dpphCnt:0, cnt:a.dpphCnt }))
+      .map(([c,a]) => ({ c, v: a.dpphSum, cnt:a.dpphCnt }))
       .filter(x => x.v > 0 && x.v < 12.10)
       .sort((a,b) => a.v - b.v)
       .forEach(x => {
@@ -4447,9 +5228,7 @@ function gerarRelatorio(tipo) {
           });
           if (basesAffected.length > 0) {
             const bRows = filtered.filter(r=>(r[COL.CARRIER]||'').trim()===x.c && basesAffected.includes((r[COL.BASE]||'').trim()));
-            const bDpphSum=bRows.reduce((s,r)=>{const v=n(r[COL.DPPH]);return v>0?s+v:s;},0);
-            const bDpphCnt=bRows.filter(r=>n(r[COL.DPPH])>0).length;
-            const bv = bDpphCnt>0 ? bDpphSum/bDpphCnt : 0;
+            const { dpph: bv } = calcDpph(bRows);
             baseImpact = ` - Maior impacto em ${basesAffected.join('/')} com média de ${fmt(bv)} pacotes/h`;
           }
         }
@@ -4483,7 +5262,7 @@ function gerarRelatorio(tipo) {
     Object.entries(byCarrier)
       .map(([c,a]) => ({ c, v: a.pac>0?pct2(a.uv,a.pac):0, uv:a.uv }))
       .filter(x => x.v > 0.60)
-      .sort((a,b) => b.v - a.v)
+      .sort((a,b) => b.uv - a.uv)
       .forEach(x => {
         lines.push(`🔴 ${x.c} → ${fmt(x.v)}% +${fmt(x.v-0.60)}pp | ${x.uv.toLocaleString('pt-BR')} UV`);
       });
@@ -4527,8 +5306,8 @@ function gerarRelatorio(tipo) {
       lines.push(SEP);
       const ofens = Object.values(byCarrierBase)
         .map(a => ({ c:a.carrier, b:a.base, v: a.desp>0?pct2(a.claims,a.desp):0, cl:a.claims, desp:a.desp }))
-        .filter(x => x.v > 0.14 && x.cl > 0 && !x.b.toUpperCase().startsWith('BRNAL') && !x.c.toUpperCase().startsWith('BRNAL'))
-        .sort((a,b) => b.v - a.v);
+        .filter(x => { const g = extratoGrupo(x.b); return x.v > 0.14 && x.cl > 0 && g !== 'NEX' && g !== 'DC'; })
+        .sort((a,b) => b.cl - a.cl);
       if (ofens.length) ofens.forEach(x => {
         lines.push(`🔴 ${x.c} · ${x.b} → ${fmt(x.v)}% +${fmt(x.v-0.14)}pp | ${x.cl.toLocaleString('pt-BR')} reclamos`);
       });
@@ -4539,7 +5318,7 @@ function gerarRelatorio(tipo) {
       Object.entries(byCarrier)
         .map(([c,a]) => ({ c, v: a.desp>0?pct2(a.claims,a.desp):0, cl:a.claims }))
         .filter(x => x.v > 0.14)
-        .sort((a,b) => b.v - a.v)
+        .sort((a,b) => b.cl - a.cl)
         .forEach(x => {
           lines.push(`🔴 ${x.c} → ${fmt(x.v)}% +${fmt(x.v-0.14)}pp | ${x.cl.toLocaleString('pt-BR')} reclamos`);
         });
@@ -4575,6 +5354,22 @@ const zone = document.getElementById('uploadZone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
 zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+// Popup de boas-vindas / créditos
+function closeWelcome() {
+  const dontShow = document.getElementById('welcomeDontShow')?.checked;
+  if (dontShow) { try { localStorage.setItem('welcomeDismissed', '1'); } catch (e) {} }
+  document.getElementById('welcomeBackdrop').classList.remove('open');
+}
+function showWelcome() {
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('welcomeDismissed') === '1'; } catch (e) {}
+  if (!dismissed) document.getElementById('welcomeBackdrop').classList.add('open');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('welcomeBackdrop').classList.contains('open')) closeWelcome();
+});
+showWelcome();
 </script>
 </body>
 </html>
