@@ -150,6 +150,9 @@ header span { font-size: 12px; color: #888; }
 .welcome-btn:hover { filter: brightness(0.95); }
 .welcome-link { display: block; text-decoration: none; border: 0.5px solid var(--border-strong); border-radius: 10px; padding: 9px 14px; margin-bottom: 10px; font-size: 12px; font-weight: 600; color: var(--text-primary); background: var(--surface-1); transition: border-color .12s; }
 .welcome-link:hover { border-color: #FFE600; }
+#supportFab { position: fixed; top: 14px; right: 14px; z-index: 9998; width: 44px; height: 44px; border-radius: 50%; border: none; background: #FFE600; color: #1a1a1a; font-size: 20px; cursor: grab; box-shadow: 0 4px 14px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; transition: transform .12s, box-shadow .12s; touch-action: none; user-select: none; -webkit-user-select: none; }
+#supportFab:active { cursor: grabbing; }
+#supportFab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
 .welcome-dismiss { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: var(--text-muted); margin-top: 12px; cursor: pointer; }
 .enc-summary { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 8px; }
 @media (max-width: 640px) { .enc-summary { grid-template-columns: repeat(2, minmax(0,1fr)); } }
@@ -1272,6 +1275,8 @@ table.detail tr:hover td { background: var(--surface-1); }
     <label class="welcome-dismiss"><input type="checkbox" id="welcomeDontShow"> Não mostrar novamente</label>
   </div>
 </div>
+
+<button id="supportFab" title="Contatos / suporte (arraste para mover)" aria-label="Contatos e suporte">💬</button>
 
 <script>
 let rawData = [];
@@ -5361,8 +5366,62 @@ zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('
 // Popup de boas-vindas / créditos
 function closeWelcome() {
   const dontShow = document.getElementById('welcomeDontShow')?.checked;
-  if (dontShow) { try { localStorage.setItem('welcomeDismissed', '1'); } catch (e) {} }
+  try {
+    if (dontShow) localStorage.setItem('welcomeDismissed', '1');
+    else localStorage.removeItem('welcomeDismissed');
+  } catch (e) {}
   document.getElementById('welcomeBackdrop').classList.remove('open');
+}
+function openWelcomeInfo() {
+  const chk = document.getElementById('welcomeDontShow');
+  try { if (chk) chk.checked = localStorage.getItem('welcomeDismissed') === '1'; } catch (e) {}
+  document.getElementById('welcomeBackdrop').classList.add('open');
+}
+function setupSupportFab() {
+  const fab = document.getElementById('supportFab');
+  if (!fab) return;
+  try {
+    const p = JSON.parse(localStorage.getItem('fabPos') || 'null');
+    if (p && typeof p.left === 'number' && typeof p.top === 'number') {
+      fab.style.left = p.left + 'px'; fab.style.top = p.top + 'px'; fab.style.right = 'auto';
+    }
+  } catch (e) {}
+  let dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  const pt = e => e.touches && e.touches[0] ? e.touches[0] : e;
+  const onDown = e => {
+    dragging = true; moved = false;
+    const p = pt(e); sx = p.clientX; sy = p.clientY;
+    const r = fab.getBoundingClientRect(); ox = r.left; oy = r.top;
+    fab.style.right = 'auto'; fab.style.transition = 'none';
+    e.preventDefault();
+  };
+  const onMove = e => {
+    if (!dragging) return;
+    const p = pt(e);
+    const dx = p.clientX - sx, dy = p.clientY - sy;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) moved = true;
+    const w = fab.offsetWidth, h = fab.offsetHeight;
+    const nl = Math.max(4, Math.min(window.innerWidth - w - 4, ox + dx));
+    const nt = Math.max(4, Math.min(window.innerHeight - h - 4, oy + dy));
+    fab.style.left = nl + 'px'; fab.style.top = nt + 'px';
+    e.preventDefault();
+  };
+  const onUp = () => {
+    if (!dragging) return;
+    dragging = false; fab.style.transition = '';
+    if (moved) {
+      const r = fab.getBoundingClientRect();
+      try { localStorage.setItem('fabPos', JSON.stringify({ left: Math.round(r.left), top: Math.round(r.top) })); } catch (e) {}
+    } else {
+      openWelcomeInfo();
+    }
+  };
+  fab.addEventListener('mousedown', onDown);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  fab.addEventListener('touchstart', onDown, { passive: false });
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
 }
 function showWelcome() {
   let dismissed = false;
@@ -5373,6 +5432,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('welcomeBackdrop').classList.contains('open')) closeWelcome();
 });
 showWelcome();
+setupSupportFab();
 </script>
 </body>
 </html>
