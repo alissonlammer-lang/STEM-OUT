@@ -415,7 +415,9 @@ table.detail tr:hover td { background: var(--surface-1); }
   <h1>📦 Dashboard de Indicadores Logísticos</h1>
   <div style="display:flex;align-items:center;gap:12px;">
     <span id="headerInfo">Nenhum arquivo carregado</span>
-    <button id="reloadBtn" onclick="document.getElementById('fileInputReload').click()" style="display:none;padding:6px 14px;border:none;border-radius:var(--radius);background:#FFE600;color:#111110;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">↺ Novo arquivo</button>
+    <span id="nextRefreshInfo" style="font-size:11px;color:#aaa;white-space:nowrap"></span>
+    <button id="remoteRefreshBtn" onclick="carregarDadosOnline(true)" style="display:none;padding:6px 14px;border:none;border-radius:var(--radius);background:#FFE600;color:#111110;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">↻ Atualizar online</button>
+    <button id="reloadBtn" onclick="document.getElementById('fileInputReload').click()" style="display:none;padding:6px 14px;border:0.5px solid #777;border-radius:var(--radius);background:transparent;color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">📂 Arquivo manual</button>
     <input type="file" id="fileInputReload" accept=".csv,.xlsx,.xls,.tsv" style="display:none">
   </div>
 </header>
@@ -520,6 +522,7 @@ table.detail tr:hover td { background: var(--surface-1); }
     <button class="tab-btn" onclick="showMainTab('tabRota',this)">🗺 Por Rota</button>
     <button class="tab-btn" onclick="showMainTab('tabEncerramento',this)">⏱ Encerramento D+</button>
     <button class="tab-btn" onclick="showMainTab('tabDobra',this)">🔄 Dobra de Rotas</button>
+    <button class="tab-btn" onclick="showMainTab('tabOfensores',this)">🚨 Top Ofensores</button>
   </div>
 
   <!-- ══════ TAB: VISÃO GERAL ══════ -->
@@ -1054,6 +1057,7 @@ table.detail tr:hover td { background: var(--surface-1); }
       </div>
       <div class="detail-card">
         <div class="detail-card-title">Detalhamento por rota — ordenado por maior insucessos</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Passe o mouse sobre o número da coluna <strong>Insucessos</strong> pra ver o detalhamento por motivo já ordenado do maior para o menor — evita ler errado ao rolar as colunas de motivo (que ficam zeradas/"0" pra maioria das rotas).</div>
         <div class="detail-table-wrap" id="rotaTableWrap" style="max-height:560px">
           <table class="dtbl" id="detTblRota">
             <thead><tr>
@@ -1092,7 +1096,7 @@ table.detail tr:hover td { background: var(--surface-1); }
       <div class="detail-card">
         <div class="detail-card-title">⏱ Encerramento de rotas (D+)</div>
         <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
-          Rotas agrupadas por <strong>quando foram encerradas</strong> em relação ao dia de despacho. <strong>Pendente</strong> = rota sem data de conclusão (ainda não finalizada). <strong>D+1 / D+2</strong> = fechou 1 ou 2 dias depois do despacho. Clique num card para filtrar a tabela.
+          Rotas agrupadas por <strong>quando foram encerradas</strong> em relação ao dia de despacho. <strong>Pendente</strong> = rota sem HORA_FIM registrada (ainda não finalizada). <strong>D+1 / D+2</strong> = fechou 1 ou 2 dias depois do despacho. A coluna <strong>ORH (h)</strong> usa o valor da coluna ORH_HOURS quando plausível; quando ele estiver vazio ou fora de 0–24h (erro de exportação), calcula automaticamente pela diferença entre HORA_INICIO e HORA_FIM (indicado com 🕐, e ⚠️ quando o ORH_HOURS informado for suspeito). Rotas acima de 12h ("bateram" o limite) indicam onde o MLP deveria ter ativado pernoite/sleepover — use o filtro ao lado da tabela para isolar essas rotas por MLP. Clique num card para filtrar a tabela.
         </div>
         <div id="encSummary" class="enc-summary"></div>
       </div>
@@ -1126,6 +1130,7 @@ table.detail tr:hover td { background: var(--surface-1); }
           <div class="detail-card-title" style="margin:0;border:0;padding:0">Rotas</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <div id="encFilterBtns" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+            <div id="encOrhFilterBtns" style="display:flex;gap:5px;flex-wrap:wrap"></div>
             <input type="text" id="encSearch" placeholder="ID rota, base, MLP, driver..." oninput="renderEncerramento()" style="border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:5px 10px;font-size:12px;background:var(--surface-1);color:var(--text-primary);outline:none;width:200px;">
             <button class="chart-btn" onclick="copyEncList()">📋 Copiar IDs</button>
           </div>
@@ -1137,10 +1142,12 @@ table.detail tr:hover td { background: var(--surface-1); }
               <th onclick="sortDtbl('encTbl',1)">Base</th>
               <th onclick="sortDtbl('encTbl',2)">MLP</th>
               <th onclick="sortDtbl('encTbl',3)">ID Driver</th>
-              <th onclick="sortDtbl('encTbl',4)">Despacho</th>
-              <th onclick="sortDtbl('encTbl',5)">Conclusão</th>
-              <th onclick="sortDtbl('encTbl',6)">Encerramento</th>
-              <th onclick="sortDtbl('encTbl',7)">Status</th>
+              <th onclick="sortDtbl('encTbl',4)">Insucesso</th>
+              <th onclick="sortDtbl('encTbl',5)">ORH (h)</th>
+              <th onclick="sortDtbl('encTbl',6)">Despacho</th>
+              <th onclick="sortDtbl('encTbl',7)">Conclusão</th>
+              <th onclick="sortDtbl('encTbl',8)">Encerramento</th>
+              <th onclick="sortDtbl('encTbl',9)">Status</th>
             </tr></thead>
             <tbody id="encTblBody"></tbody>
           </table>
@@ -1218,6 +1225,67 @@ table.detail tr:hover td { background: var(--surface-1); }
     </div>
   </div>
 
+  <!-- ══════ TAB: TOP OFENSORES POR KPI ══════ -->
+  <div id="tabOfensores" class="tab-section">
+    <div class="detail-content">
+      <div class="detail-filter-row" style="align-items:flex-end">
+        <div class="filter-group">
+          <label>Ver por</label>
+          <div style="display:flex;gap:6px">
+            <button class="chart-btn enc-btn-active" id="ofensorDimDriver" onclick="setOfensorDim('driver')">Drivers</button>
+            <button class="chart-btn" id="ofensorDimRota" onclick="setOfensorDim('rota')">Rotas</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label>Top</label>
+          <select id="ofensorTopN" onchange="renderOfensores()" style="border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:5px 10px;font-size:12px;background:var(--surface-1);color:var(--text-primary);outline:none;">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+          </select>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);max-width:420px">Um gráfico por KPI, sempre com os piores/maiores ofensores primeiro. Clique numa barra pra copiar o ID.</div>
+      </div>
+      <div id="ofensorGrid" class="detail-grid-2">
+        <div class="detail-card" id="ofensorCard_INS">
+          <div class="detail-card-title" id="ofensorTitle_INS">Top drivers por Insucessos</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_INS"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_INS"></canvas></div>
+        </div>
+        <div class="detail-card" id="ofensorCard_DS">
+          <div class="detail-card-title" id="ofensorTitle_DS">Top drivers por DS %</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_DS"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_DS"></canvas></div>
+        </div>
+        <div class="detail-card" id="ofensorCard_ORHC">
+          <div class="detail-card-title" id="ofensorTitle_ORHC">Top drivers por ORHC %</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_ORHC"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_ORHC"></canvas></div>
+        </div>
+        <div class="detail-card" id="ofensorCard_DPPH">
+          <div class="detail-card-title" id="ofensorTitle_DPPH">Top drivers por DPPH</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_DPPH"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_DPPH"></canvas></div>
+        </div>
+        <div class="detail-card" id="ofensorCard_UV">
+          <div class="detail-card-title" id="ofensorTitle_UV">Top drivers por Não Visitados</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_UV"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_UV"></canvas></div>
+        </div>
+        <div class="detail-card" id="ofensorCard_CR">
+          <div class="detail-card-title" id="ofensorTitle_CR">Top drivers por Reclamos (CR)</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_CR"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_CR"></canvas></div>
+        </div>
+        <div class="detail-card" id="ofensorCard_ORH">
+          <div class="detail-card-title" id="ofensorTitle_ORH">Top drivers por ORH médio</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px" id="ofensorSub_ORH"></div>
+          <div style="position:relative;width:100%;height:320px"><canvas id="chartOfensor_ORH"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- end #dashboard -->
 
 <!-- MODAL WHATSAPP -->
@@ -1284,11 +1352,28 @@ let charts = {};
 let modalCharts = {};
 const COL = {};
 
+/* ══════════════════════════════════════════
+   FONTE ONLINE / ATUALIZAÇÃO AUTOMÁTICA
+   1) Publique a aba de saída do Google Sheets como CSV.
+   2) Cole abaixo a URL terminada em output=csv.
+   3) Deixe vazio para manter somente o upload manual.
+══════════════════════════════════════════ */
+const REMOTE_CSV_URL = ''; // vazio = modo manual (upload de arquivo), sem atualização automática online
+const REMOTE_REFRESH_START_HOUR = 6;
+const REMOTE_REFRESH_END_HOUR   = 23;
+const REMOTE_REFRESH_MINUTE     = 10; // lê a planilha em HH:10, após o refresh horário do BigQuery/Sheets
+
+let remoteRefreshTimer = null;
+let remoteCountdownTimer = null;
+let remoteNextRefreshAt = null;
+let remoteLoadInProgress = false;
+
 Chart.register(ChartDataLabels);
 
 /* ── Column detection ── */
 function detectColumns(headers) {
   const map = {
+    // BASE deve vir da coluna BASE. SVC representa o site/operação (ex.: SAL1), não a base operacional.
     BASE:        ['BASE','BASE_OPERACAO','BASE_OPERAÇÃO','BASE_NAME'],
     CARRIER:     ['CARRIER_NAME','MLP','CARRIER','OPERADORA','TRANSPORTADORA'],
     DATA:        ['DATA_INICIO','DATA','DATE','DT','DT_ENTREGA','DATA_ENTREGA','DATA_DESPACHO','DT_INICIO'],
@@ -1311,13 +1396,19 @@ function detectColumns(headers) {
     CLUSTER:         ['CLUSTER','CLUSTER_ID','CLUSTER_ROTA'],
     CICLO:           ['CICLO','CICLO_AM_PM','CICLO_ENTREGA','CYCLE'],
     HORA_FIM:        ['hora_fim','HORA_FIM','HORA_FIM_ROTA','END_TIME'],
+    HORA_INICIO:     ['hora_inicio','HORA_INICIO','HORA_INICIO_ROTA','START_TIME'],
     TIPO_VEICULO:    ['TIPO_VEICULO','TIPO_VEICULO_PADRAO','Tipo_veiculo','TIPO','VEHICLE_TYPE','TIPO_DE_VEICULO'],
     ENC_DMAIS:       ['ENCERRAMENTO_D_MAIS','ENCERRAMENTO_DMAIS','DIAS_ENCERRAMENTO','ENCERR_D_MAIS','D_MAIS','ENCERRAMENTO'],
   };
   const uH = headers.map(h => h.toUpperCase().trim().replace(/\s+/g,'_'));
   for (const [key, cands] of Object.entries(map)) {
-    const f = uH.find(h => cands.includes(h));
-    if (f) COL[key] = headers[uH.indexOf(f)];
+    // Prioriza a ordem definida em cands, em vez da ordem física das colunas no CSV.
+    // Isso evita que SVC (primeira coluna) seja confundida com BASE quando ambas existem.
+    const normalizedCandidates = cands.map(c => c.toUpperCase().trim().replace(/\s+/g,'_'));
+    const idx = normalizedCandidates
+      .map(candidate => uH.indexOf(candidate))
+      .find(index => index >= 0);
+    if (idx !== undefined) COL[key] = headers[idx];
   }
   const fallbacks = {
     DESPACHADOS: /despach/i, ENTREGUES: h => /entreg/i.test(h) && !/insu/i.test(h),
@@ -1335,6 +1426,7 @@ function detectColumns(headers) {
     CLUSTER: h => /^cluster$/i.test(h),
     CICLO: h => /^ciclo$/i.test(h),
     HORA_FIM: h => /^hora_fim$/i.test(h),
+    HORA_INICIO: h => /^hora_inicio$/i.test(h) || /^hora_in[íi]cio$/i.test(h),
     TIPO_VEICULO: h => /tipo.*veic|veic.*tipo|vehicle.*type|type.*vehicle/i.test(h),
     ENC_DMAIS: h => /d_?mais/i.test(h) || /encerr/i.test(h),
   };
@@ -1347,7 +1439,15 @@ function detectColumns(headers) {
   }
 }
 
-function n(v) { return parseFloat(v) || 0; }
+function n(v) {
+  if (v === null || v === undefined) return 0;
+  let s = String(v).trim();
+  if (s === '') return 0;
+  // formato BR: "1.234,56" ou "6,73" -> converte para ponto decimal
+  if (s.includes(',')) s = s.replace(/\.(?=\d{3}(?:\D|$))/g, '').replace(',', '.');
+  const f = parseFloat(s);
+  return isNaN(f) ? 0 : f;
+}
 
 // ── DPPH correto: deduplica por ROUTE_ID, soma ENTREGUES / soma ORH_HOURS ──
 function calcDpph(rows) {
@@ -3029,8 +3129,10 @@ function renderModalCR(body, filtered, kpi, bc, carriers) {
    TAB: ENCERRAMENTO D+ (rotas pendentes / fechadas em D+1, D+2...)
 ══════════════════════════════════════════ */
 let encBucketFilter = 'ALL';
+let encOrhFilter = 'ALL';
 let _encRowsFiltered = [];
 function setEncFilter(b) { encBucketFilter = b; renderEncerramento(); }
+function setEncOrhFilter(v) { encOrhFilter = v; renderEncerramento(); }
 
 function _encCompute() {
   const filtered = getFiltered({ includeAbertas: true });   // inclui rotas em andamento (pendentes)
@@ -3045,7 +3147,11 @@ function _encCompute() {
     const desp = (r[COL.DATA]||'').trim();
     const conc = concCol ? (r[concCol]||'').trim() : '';
     const encRaw = encCol ? (r[encCol] ?? '').toString().trim() : '';
-    // primário: diferença despacho × conclusão
+    const timing = _routeTiming(r);
+    // primário: diferença despacho × conclusão (DATA_FIM) — é o único sinal confiável de rota
+    // realmente encerrada. HORA_FIM NÃO serve pra isso: na prática ela reflete o horário do
+    // último checkpoint e continua sendo atualizada mesmo com a rota ainda em curso (validado
+    // com casos reais em que HORA_FIM tinha valor mas a rota seguia aberta no sistema).
     let dPlus = null, pending = false;
     if (!conc) pending = true;
     else {
@@ -3061,7 +3167,25 @@ function _encCompute() {
     else if (dPlus === 1) bucket = 'D1';
     else if (dPlus === 2) bucket = 'D2';
     else bucket = 'D3';
-    rows.push({ id:k, base:(r[COL.BASE]||'').trim(), mlp:(r[COL.CARRIER]||'').trim(), drv:(drvOf(r)||'').toString().trim(), desp, conc, encRaw, dPlus, pending, bucket });
+    const ins = Math.max(0, n(r[COL.DESPACHADOS]) - n(r[COL.ENTREGUES]));
+    // ORH: rota pendente (em aberto) -> estima pelas horas decorridas desde HORA_INICIO até agora
+    // (HORA_FIM não é confiável enquanto a rota está em curso). Rota já encerrada -> usa ORH_HOURS
+    // quando plausível (0–24h), senão calcula pela diferença real HORA_INICIO/HORA_FIM/DATA_FIM.
+    const orhRaw = COL.ORH_HOURS ? n(r[COL.ORH_HOURS]) : null;
+    const orhValid = orhRaw !== null && orhRaw > 0 && orhRaw <= 24;
+    let hrs = null, hrsSource = '';
+    if (pending) {
+      const elapsed = _elapsedSinceStart(r);
+      if (elapsed !== null) { hrs = elapsed; hrsSource = 'aberto'; }
+      else if (orhValid) { hrs = orhRaw; hrsSource = 'orh'; }
+    } else {
+      if (orhValid) { hrs = orhRaw; hrsSource = 'orh'; }
+      else if (timing) { hrs = timing.hours; hrsSource = 'horario'; }
+      else if (orhRaw !== null && orhRaw !== 0) { hrs = orhRaw; hrsSource = 'orh'; }
+    }
+    const over12 = hrs !== null && !isNaN(hrs) && hrs > 12;
+    const suspicious = !pending && orhRaw !== null && orhRaw !== 0 && !orhValid; // ORH_HOURS informado mas fora do range plausível
+    rows.push({ id:k, base:(r[COL.BASE]||'').trim(), mlp:(r[COL.CARRIER]||'').trim(), drv:(drvOf(r)||'').toString().trim(), desp, conc, encRaw, dPlus, pending, bucket, ins, hrs, hrsSource, suspicious, over12 });
   });
   return rows;
 }
@@ -3095,9 +3219,16 @@ function renderEncerramento() {
     const btns = [['ALL','Todas'],['PEND','Pendentes'],['D0','D+0'],['D1','D+1'],['D2','D+2'],['D3','D+3+']];
     fbEl.innerHTML = btns.map(([k,l]) => `<button class="chart-btn${encBucketFilter===k?' enc-btn-active':''}" onclick="setEncFilter('${k}')">${l}</button>`).join('');
   }
+  const ofbEl = document.getElementById('encOrhFilterBtns');
+  if (ofbEl) {
+    const obtns = [['ALL','ORH: Todas'],['OVER','🔴 Bateram (>12h)'],['UNDER','✅ Não bateram (≤12h)']];
+    ofbEl.innerHTML = obtns.map(([k,l]) => `<button class="chart-btn${encOrhFilter===k?' enc-btn-active':''}" onclick="setEncOrhFilter('${k}')">${l}</button>`).join('');
+  }
   const q = (document.getElementById('encSearch')?.value||'').toLowerCase();
   let rows = all;
   if (encBucketFilter !== 'ALL') rows = rows.filter(x => x.bucket === encBucketFilter);
+  if (encOrhFilter === 'OVER') rows = rows.filter(x => x.over12);
+  else if (encOrhFilter === 'UNDER') rows = rows.filter(x => !x.over12);
   if (q) rows = rows.filter(x => (x.id+' '+x.base+' '+x.mlp+' '+x.drv).toLowerCase().includes(q));
   const rank = { PEND:99, D3:3, D2:2, D1:1, D0:0 };
   rows.sort((a,b) => (rank[b.bucket]-rank[a.bucket]));
@@ -3112,12 +3243,30 @@ function renderEncerramento() {
     };
     tb.innerHTML = rows.slice(0, 1000).map(x => `<tr>
       <td>${x.id||'—'}</td><td>${x.base||'—'}</td><td>${x.mlp||'—'}</td><td>${x.drv||'—'}</td>
+      <td>${x.ins ? '<span class="pill bad">'+x.ins.toLocaleString('pt-BR')+'</span>' : '0'}</td>
+      <td>${x.hrs !== null && !isNaN(x.hrs) ? `<span class="pill ${x.over12?'bad':'good'}" title="${x.hrsSource==='horario'?'Calculado por HORA_INICIO/HORA_FIM (ORH_HOURS ausente ou inválido)':x.hrsSource==='aberto'?'Rota ainda em andamento — horas decorridas desde o início até agora (estimativa, não é o ORH final)':'Valor da coluna ORH_HOURS'}">${x.hrs.toFixed(1)}h${x.hrsSource==='horario'?' 🕐':x.hrsSource==='aberto'?' ⏳':''}</span>${x.suspicious?' <span title="ORH_HOURS informado é implausível (negativo ou muito alto); horário calculado por HORA_INICIO/HORA_FIM foi usado como referência">⚠️</span>':''}` : '—'}</td>
       <td>${x.desp||'—'}</td><td>${x.conc||'<span style="color:var(--danger-text)">—</span>'}</td>
       <td>${x.encRaw !== '' ? x.encRaw : (x.pending ? '—' : (x.dPlus<=0?'D+0':'D+'+x.dPlus))}</td>
       <td>${badge(x)}</td></tr>`).join('');
   }
   const cnt = document.getElementById('encCount');
-  if (cnt) cnt.textContent = `${rows.length.toLocaleString('pt-BR')} rota(s) exibida(s)${rows.length>1000?' (mostrando as 1000 primeiras)':''} · ${all.length.toLocaleString('pt-BR')} rotas no total`;
+  if (cnt) {
+    const over12All = all.filter(x => x.over12);
+    const over12Pct = all.length ? (over12All.length/all.length*100).toFixed(1).replace('.',',') : '0';
+    const byMlp12 = {};
+    over12All.forEach(x => { const k = x.mlp||'N/D'; byMlp12[k] = (byMlp12[k]||0)+1; });
+    const topMlp12 = Object.entries(byMlp12).sort((a,b)=>b[1]-a[1])[0];
+    const viaHorario = all.filter(x => x.hrsSource === 'horario').length;
+    const viaAberto = all.filter(x => x.hrsSource === 'aberto').length;
+    const suspeitas = all.filter(x => x.suspicious).length;
+    const impactTxt = over12All.length
+      ? ` · ⚠️ ${over12All.length.toLocaleString('pt-BR')} rota(s) >12h no recorte (${over12Pct}%)${topMlp12?` · MLP mais afetada: ${topMlp12[0]} (${topMlp12[1].toLocaleString('pt-BR')})`:''}`
+      : '';
+    const extraTxt = (viaHorario || suspeitas || viaAberto)
+      ? ` · ${viaHorario.toLocaleString('pt-BR')} rota(s) com ORH calculado por HORA_INICIO/HORA_FIM${viaAberto?` · ${viaAberto.toLocaleString('pt-BR')} em andamento (⏳ estimativa em tempo real)`:''}${suspeitas?` · ${suspeitas.toLocaleString('pt-BR')} com ORH_HOURS suspeito (fora de 0–24h)`:''}`
+      : '';
+    cnt.textContent = `${rows.length.toLocaleString('pt-BR')} rota(s) exibida(s)${rows.length>1000?' (mostrando as 1000 primeiras)':''} · ${all.length.toLocaleString('pt-BR')} rotas no total${impactTxt}${extraTxt}`;
+  }
   _renderEncDrivers(all);
 }
 
@@ -3196,6 +3345,7 @@ function showMainTab(id, btn) {
   if (id === 'tabCR')        renderDetailCR();
   if (id === 'tabRota')      renderTabRota();
   if (id === 'tabEncerramento') renderEncerramento();
+  if (id === 'tabOfensores') renderOfensores();
 }
 
 /* ══════════════════════════════════════════
@@ -3331,6 +3481,58 @@ function parseDateBR(s) {
   const p = s.split('/');
   if (p.length === 3) return new Date(+p[2], +p[1]-1, +p[0]);
   return new Date(s);
+}
+
+// ── Horário real da rota (a partir de HORA_INICIO / HORA_FIM), usado como
+// cross-check/fallback para ORH_HOURS e para detectar encerramento quando
+// a coluna de conclusão (DATA_FIM) está vazia mas a rota já tem horário de fim. ──
+function _timeToSec(t) {
+  if (!t) return null;
+  const m = String(t).trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!m) return null;
+  return (+m[1]) * 3600 + (+m[2]) * 60 + (+(m[3] || 0));
+}
+function _routeTiming(r) {
+  if (!COL.HORA_INICIO || !COL.HORA_FIM || !COL.DATA) return null;
+  const hIni = (r[COL.HORA_INICIO] || '').trim();
+  const hFim = (r[COL.HORA_FIM] || '').trim();
+  if (!hIni || !hFim) return null;
+  const dIni = parseDateBR((r[COL.DATA] || '').trim());
+  if (!dIni || isNaN(+dIni)) return null;
+  const secIni = _timeToSec(hIni), secFim = _timeToSec(hFim);
+  if (secIni === null || secFim === null) return null;
+  const start = new Date(dIni.getFullYear(), dIni.getMonth(), dIni.getDate(), 0, 0, secIni);
+  let end = null;
+  const dFimStr = COL.DATA_FIM ? (r[COL.DATA_FIM] || '').trim() : '';
+  if (dFimStr) {
+    const dFim = parseDateBR(dFimStr);
+    if (dFim && !isNaN(+dFim)) end = new Date(dFim.getFullYear(), dFim.getMonth(), dFim.getDate(), 0, 0, secFim);
+  }
+  if (!end) {
+    // sem DATA_FIM confiável: assume mesmo dia; se a hora de fim for menor que a de início, a rota cruzou a meia-noite
+    end = new Date(dIni.getFullYear(), dIni.getMonth(), dIni.getDate(), 0, 0, secFim);
+    if (end < start) end = new Date(end.getTime() + 86400000);
+  }
+  const hours = (end - start) / 3600000;
+  if (!(hours >= 0)) return null;
+  return { start, end, hours };
+}
+// Para rotas ainda em aberto (sem HORA_FIM): estima as horas decorridas desde o início até agora.
+// Só aplica quando o início foi há no máximo 48h — passado disso, é mais provável que seja um
+// dado antigo com HORA_FIM ausente por erro/gap de exportação do que uma rota realmente em curso.
+function _elapsedSinceStart(r) {
+  if (!COL.HORA_INICIO || !COL.DATA) return null;
+  const hIni = (r[COL.HORA_INICIO] || '').trim();
+  if (!hIni) return null;
+  const dIni = parseDateBR((r[COL.DATA] || '').trim());
+  if (!dIni || isNaN(+dIni)) return null;
+  const secIni = _timeToSec(hIni);
+  if (secIni === null) return null;
+  const start = new Date(dIni.getFullYear(), dIni.getMonth(), dIni.getDate(), 0, 0, secIni);
+  const now = new Date();
+  const hours = (now - start) / 3600000;
+  if (hours < 0 || hours > 48) return null;
+  return hours;
 }
 
 // Groups rawData by semana → date → aggregated metrics
@@ -4523,6 +4725,131 @@ function renderRouteInsChart() {
   _routeInsChart = _buildInsBar('chartRouteIns', sorted.slice(0, topN), meta);
 }
 
+/* ══════════════════════════════════════════
+   ABA: TOP OFENSORES POR KPI
+   Um gráfico vertical por métrica (drivers ou rotas), independente
+   da lógica de Insucessos acima — não reaproveita _insAgg/_buildInsBar
+   de propósito, pra não arriscar quebrar o que já funcionava.
+══════════════════════════════════════════ */
+const OFENSOR_METRICS = [
+  { key:'INS',  label:'Insucessos',      worseWhen:'high', unit:'',  fmt:v=>v.toLocaleString('pt-BR') },
+  { key:'DS',   label:'DS %',            worseWhen:'low',  unit:'%', fmt:v=>fmtPt(v) },
+  { key:'ORHC', label:'ORHC %',          worseWhen:'low',  unit:'%', fmt:v=>fmtPt(v) },
+  { key:'DPPH', label:'DPPH',            worseWhen:'low',  unit:'',  fmt:v=>v.toFixed(2) },
+  { key:'UV',   label:'Não Visitados',   worseWhen:'high', unit:'',  fmt:v=>v.toLocaleString('pt-BR') },
+  { key:'CR',   label:'Reclamos (CR)',   worseWhen:'high', unit:'',  fmt:v=>v.toLocaleString('pt-BR') },
+  { key:'ORH',  label:'ORH médio',       worseWhen:'high', unit:'h', fmt:v=>v.toFixed(1) },
+];
+let _ofensorCharts = {};
+let _ofensorDim = 'driver'; // 'driver' | 'rota'
+
+function _ofensorAgg(dim) {
+  const filtered = getFiltered();
+  const keyFn = dim === 'rota' ? _rotKey : _drvKey;
+  const map = new Map();
+  const seenRoutes = new Set();
+  filtered.forEach(r => {
+    const rid = COL.ROUTE_ID ? (r[COL.ROUTE_ID]||'').toString().trim() : '';
+    if (rid && seenRoutes.has(rid)) return;
+    if (rid) seenRoutes.add(rid);
+    const k = keyFn(r, rid);
+    if (!k) return;
+    const o = map.get(k) || { desp:0, entr:0, ins:0, horasSum:0, horasCount:0, orhcOK:0, orhcTotal:0, uv:0, claims:0, rotas:0 };
+    const desp = n(r[COL.DESPACHADOS]), entr = n(r[COL.ENTREGUES]);
+    o.desp += desp; o.entr += entr; o.rotas++;
+    o.ins += Math.max(0, desp - entr);
+    if (COL.ORH_HOURS) {
+      const orhRaw = n(r[COL.ORH_HOURS]);
+      let h = (orhRaw > 0 && orhRaw <= 24) ? orhRaw : null;
+      if (h === null) { const timing = _routeTiming(r); if (timing && timing.hours > 0) h = timing.hours; }
+      if (h !== null) { o.horasSum += h; o.horasCount++; }
+    }
+    if (COL.ORHC && r[COL.ORHC] !== '' && r[COL.ORHC] !== undefined) { o.orhcTotal++; if (n(r[COL.ORHC]) === 1) o.orhcOK++; }
+    if (COL.UNVISITED) o.uv += n(r[COL.UNVISITED]);
+    if (COL.ID_COM_RECLAMO && (r[COL.ID_COM_RECLAMO]||'').trim() !== '') o.claims++;
+    map.set(k, o);
+  });
+  return map;
+}
+
+function _ofensorValue(o, metricKey) {
+  switch (metricKey) {
+    case 'INS':  return o.ins;
+    case 'DS':   return o.desp > 0 ? (o.entr/o.desp*100) : null;
+    case 'ORHC': return o.orhcTotal > 0 ? (o.orhcOK/o.orhcTotal*100) : null;
+    case 'DPPH': return o.horasSum > 0 ? (o.entr/o.horasSum) : null;
+    case 'UV':   return o.uv;
+    case 'CR':   return o.claims;
+    case 'ORH':  return o.horasCount > 0 ? (o.horasSum/o.horasCount) : null;
+    default: return null;
+  }
+}
+
+function _buildOfensorBar(canvasId, entries, metric) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  if (_ofensorCharts[canvasId]) { _ofensorCharts[canvasId].destroy(); delete _ofensorCharts[canvasId]; }
+  if (!entries.length) { const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvas.width,canvas.height); return null; }
+  const labels = entries.map(([k]) => k);
+  const data   = entries.map(([,v]) => v);
+  const chart = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: metric.label, data, backgroundColor: data.map((v,i) => i < 3 ? '#d03b3b' : '#e8836e'), borderRadius: 4, borderSkipped: false }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick: (evt, els, chart) => { if (!els.length) return; showIdCopy(String(chart.data.labels[els[0].index])); },
+      onHover: (evt, els) => { if (evt.native && evt.native.target) evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${metric.fmt(ctx.parsed.y)}${metric.unit}` } },
+        datalabels: { anchor:'end', align:'end', formatter: v => metric.fmt(v)+metric.unit, color:'#2a2926', font:{size:9,weight:'700'}, offset:2, clip:false }
+      },
+      layout: { padding: { top: 20 } },
+      scales: {
+        x: { ticks: { color:'#45433f', font:{size:10}, maxRotation:60 }, grid: { display:false } },
+        y: { ticks: { color:'#45433f', font:{size:10} }, grid: { color:'rgba(128,128,128,0.12)' } }
+      }
+    }
+  });
+  _ofensorCharts[canvasId] = chart;
+  return chart;
+}
+
+function setOfensorDim(dim) {
+  _ofensorDim = dim;
+  document.getElementById('ofensorDimDriver')?.classList.toggle('enc-btn-active', dim==='driver');
+  document.getElementById('ofensorDimRota')?.classList.toggle('enc-btn-active', dim==='rota');
+  renderOfensores();
+}
+
+function renderOfensores() {
+  const grid = document.getElementById('ofensorGrid');
+  if (!grid) return;
+  const topN = parseInt(document.getElementById('ofensorTopN')?.value || '10');
+  const map = _ofensorAgg(_ofensorDim);
+  OFENSOR_METRICS.forEach(metric => {
+    const canvasId = 'chartOfensor_' + metric.key;
+    const titleEl = document.getElementById('ofensorTitle_' + metric.key);
+    const subEl   = document.getElementById('ofensorSub_' + metric.key);
+    const entries = [...map.entries()]
+      .map(([k,o]) => [k, _ofensorValue(o, metric.key), o.ins])
+      .filter(([,v]) => v !== null && !isNaN(v) && (metric.key==='INS'||metric.key==='UV'||metric.key==='CR' ? v>0 : true))
+      .sort((a,b) => {
+        const diff = metric.worseWhen==='low' ? (a[1]-b[1]) : (b[1]-a[1]);
+        return diff !== 0 ? diff : (b[2]-a[2]); // empate -> desempata pela rota/driver com mais insucessos
+      })
+      .slice(0, topN)
+      .map(([k,v]) => [k,v]);
+    if (titleEl) titleEl.textContent = `Top ${topN} ${_ofensorDim==='rota'?'rotas':'drivers'} por ${metric.label}`;
+    if (subEl) {
+      if (!entries.length) subEl.textContent = 'Sem dados suficientes para essa métrica';
+      else if (metric.key === 'ORHC' && _ofensorDim === 'rota') subEl.textContent = 'ORHC é binário por rota (bateu/não bateu) — % só varia de fato agregado por driver. Empate em 0%/100% desempatado por total de insucessos.';
+      else subEl.textContent = `${metric.worseWhen==='low'?'Piores':'Maiores'} primeiro · clique numa barra p/ copiar o ID`;
+    }
+    _buildOfensorBar(canvasId, entries, metric);
+  });
+}
+
 function copyText(str) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
     return navigator.clipboard.writeText(str).catch(() => { _copyFallback(str); });
@@ -4635,7 +4962,8 @@ function renderRotaPage() {
     const activeInsCols = window._rotaActiveInsCols || [];
     const insCells = activeInsCols.map((col, idx) => {
       const v = n(r[col.key]);
-      return `<td style="${idx===0?'border-left:2px solid var(--border-strong);':''}">${v > 0 ? `<span style="color:var(--danger);font-weight:700">${v}</span>` : '—'}</td>`;
+      const cellVal = v > 0 ? `<span style="color:var(--danger);font-weight:700">${v}</span>` : '<span style="color:var(--text-muted)">0</span>';
+      return `<td style="${idx===0?'border-left:2px solid var(--border-strong);':''}">${cellVal}</td>`;
     }).join('');
 
     const tr = document.createElement('tr');
@@ -4870,60 +5198,265 @@ function renderPivotTable() {
   body.innerHTML = html;
 }
 
-function processData(data) {
-  if (!data||data.length===0) { showError('Arquivo vazio ou sem dados válidos.'); return; }
-  rawData = data;
+function normalizeRows(rows) {
+  return (rows || [])
+    .filter(row => row && Object.values(row).some(v => String(v ?? '').trim() !== ''))
+    .map(row => {
+      const out = {};
+      for (const [key, value] of Object.entries(row)) {
+        const cleanKey = String(key || '').replace(/^\uFEFF/, '').trim();
+        if (!cleanKey) continue;
+        out[cleanKey] = value === null || value === undefined ? '' : String(value).trim();
+      }
+      return out;
+    });
+}
+
+function getSourceTimestamp(data) {
+  if (!data || !data.length) return '';
+  const candidates = new Set([
+    'DATA_ATUALIZACAO', 'DT_ATUALIZACAO', 'ULTIMA_ATUALIZACAO',
+    'UPDATED_AT', 'LAST_UPDATE', 'DATA_CARGA', 'DT_CARGA'
+  ]);
+  const key = Object.keys(data[0]).find(h =>
+    candidates.has(String(h).toUpperCase().trim().replace(/\s+/g, '_'))
+  );
+  if (!key) return '';
+  const row = data.find(r => String(r[key] || '').trim() !== '');
+  return row ? String(row[key]).trim() : '';
+}
+
+function formatLocalDateTime(date) {
+  try {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(date);
+  } catch (_) {
+    return date.toLocaleString('pt-BR');
+  }
+}
+
+function processData(data, meta = {}) {
+  if (!data || data.length === 0) {
+    showError('Arquivo vazio ou sem dados válidos.');
+    return false;
+  }
+
+  // Evita que colunas detectadas em uma carga anterior permaneçam na próxima.
+  Object.keys(COL).forEach(key => delete COL[key]);
   detectColumns(Object.keys(data[0]));
-  if (!COL.DESPACHADOS&&!COL.ENTREGUES) { showError('Colunas de Despachados/Entregues não encontradas.'); return; }
+
+  // As duas colunas são indispensáveis aos principais indicadores.
+  if (!COL.DESPACHADOS || !COL.ENTREGUES) {
+    showError('As colunas de Despachados e Entregues são obrigatórias.');
+    return false;
+  }
+
+  rawData = data;
   Object.keys(msState).forEach(k => msState[k].clear());
   loadPersistedFilters();
+
   document.getElementById('uploadZone').style.display = 'none';
   document.getElementById('dashboard').classList.add('visible');
-  document.getElementById('headerInfo').textContent = `${data.length.toLocaleString('pt-BR')} registros carregados`;
+
+  const source = meta.source === 'remote' ? 'fonte online' : 'arquivo manual';
+  const sourceTimestamp = getSourceTimestamp(data);
+  const loadedAt = meta.loadedAt instanceof Date ? meta.loadedAt : new Date();
+  const timing = sourceTimestamp
+    ? `dados: ${sourceTimestamp}`
+    : `consulta: ${formatLocalDateTime(loadedAt)}`;
+
+  document.getElementById('headerInfo').textContent =
+    `${data.length.toLocaleString('pt-BR')} registros · ${source} · ${timing}`;
   document.getElementById('reloadBtn').style.display = 'block';
+
   populateFilters();
   update();
+  return true;
 }
 
 function showError(msg) {
   const el = document.getElementById('errorMsg');
-  el.textContent = msg; el.classList.add('visible');
+  el.textContent = msg;
+  el.classList.add('visible');
   setTimeout(() => el.classList.remove('visible'), 6000);
+}
+
+async function carregarDadosOnline(manual = false) {
+  const configuredUrl = REMOTE_CSV_URL.trim();
+  if (!configuredUrl) {
+    if (manual) showError('Configure REMOTE_CSV_URL com a URL CSV publicada da planilha.');
+    return false;
+  }
+  if (remoteLoadInProgress) return false;
+
+  remoteLoadInProgress = true;
+  const overlay = document.getElementById('loadingOverlay');
+  const button = document.getElementById('remoteRefreshBtn');
+  const showOverlay = manual || rawData.length === 0;
+
+  if (showOverlay) overlay.classList.add('visible');
+  if (button) {
+    button.disabled = true;
+    button.textContent = '⏳ Atualizando...';
+  }
+
+  try {
+    const url = new URL(configuredUrl);
+    url.searchParams.set('_t', String(Date.now()));
+
+    const response = await fetch(url.toString(), { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const csvText = await response.text();
+    const parsed = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: 'greedy',
+      dynamicTyping: false,
+      transformHeader: h => String(h || '').replace(/^\uFEFF/, '').trim()
+    });
+
+    const normalized = normalizeRows(parsed.data);
+    if (!normalized.length) throw new Error('A fonte CSV retornou zero registros.');
+
+    const accepted = processData(normalized, {
+      source: 'remote',
+      loadedAt: new Date()
+    });
+    if (!accepted) throw new Error('O esquema da fonte online não é compatível com o dashboard.');
+
+    return true;
+  } catch (error) {
+    console.error('Falha ao carregar a fonte online:', error);
+    showError(`Não foi possível atualizar os dados online: ${error.message}`);
+    return false;
+  } finally {
+    remoteLoadInProgress = false;
+    overlay.classList.remove('visible');
+    if (button) {
+      button.disabled = false;
+      button.textContent = '↻ Atualizar online';
+    }
+  }
+}
+
+function getNextRemoteRefresh(now = new Date()) {
+  const next = new Date(now);
+  next.setSeconds(0, 0);
+
+  const beforeWindow = now.getHours() < REMOTE_REFRESH_START_HOUR;
+  const afterWindow =
+    now.getHours() > REMOTE_REFRESH_END_HOUR ||
+    (now.getHours() === REMOTE_REFRESH_END_HOUR && now.getMinutes() >= REMOTE_REFRESH_MINUTE);
+
+  if (beforeWindow) {
+    next.setHours(REMOTE_REFRESH_START_HOUR, REMOTE_REFRESH_MINUTE, 0, 0);
+    return next;
+  }
+
+  if (afterWindow) {
+    next.setDate(next.getDate() + 1);
+    next.setHours(REMOTE_REFRESH_START_HOUR, REMOTE_REFRESH_MINUTE, 0, 0);
+    return next;
+  }
+
+  next.setHours(now.getHours(), REMOTE_REFRESH_MINUTE, 0, 0);
+  if (next <= now) next.setHours(now.getHours() + 1, REMOTE_REFRESH_MINUTE, 0, 0);
+
+  if (next.getHours() > REMOTE_REFRESH_END_HOUR) {
+    next.setDate(next.getDate() + 1);
+    next.setHours(REMOTE_REFRESH_START_HOUR, REMOTE_REFRESH_MINUTE, 0, 0);
+  }
+  return next;
+}
+
+function updateRemoteCountdown() {
+  const el = document.getElementById('nextRefreshInfo');
+  if (!el || !remoteNextRefreshAt || !REMOTE_CSV_URL.trim()) return;
+
+  const diff = remoteNextRefreshAt.getTime() - Date.now();
+  if (diff <= 0) {
+    el.textContent = 'Atualizando fonte online...';
+    return;
+  }
+
+  const totalSeconds = Math.floor(diff / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const remaining = hours > 0
+    ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+  const target = `${String(remoteNextRefreshAt.getHours()).padStart(2, '0')}:${String(remoteNextRefreshAt.getMinutes()).padStart(2, '0')}`;
+  el.textContent = `próxima leitura ${target} · em ${remaining}`;
+}
+
+function scheduleRemoteRefresh() {
+  if (remoteRefreshTimer) clearTimeout(remoteRefreshTimer);
+  if (remoteCountdownTimer) clearInterval(remoteCountdownTimer);
+  if (!REMOTE_CSV_URL.trim()) return;
+
+  remoteNextRefreshAt = getNextRemoteRefresh();
+  const delay = Math.max(1000, remoteNextRefreshAt.getTime() - Date.now());
+
+  remoteRefreshTimer = setTimeout(async () => {
+    try {
+      await carregarDadosOnline(false);
+    } finally {
+      scheduleRemoteRefresh();
+    }
+  }, delay);
+
+  updateRemoteCountdown();
+  remoteCountdownTimer = setInterval(updateRemoteCountdown, 1000);
+}
+
+function initRemoteDataSource() {
+  if (!REMOTE_CSV_URL.trim()) return;
+
+  const button = document.getElementById('remoteRefreshBtn');
+  if (button) button.style.display = 'block';
+  document.getElementById('headerInfo').textContent = 'Carregando dados da fonte online...';
+
+  carregarDadosOnline(false).finally(scheduleRemoteRefresh);
 }
 
 function handleFile(file) {
   if (!file) return;
   document.getElementById('loadingOverlay').classList.add('visible');
   const ext = file.name.split('.').pop().toLowerCase();
-  if (ext==='csv'||ext==='tsv') {
-    Papa.parse(file,{ header:true, skipEmptyLines:true, dynamicTyping:false,
-      complete: r => {
+  if (ext === 'csv' || ext === 'tsv') {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: 'greedy',
+      dynamicTyping: false,
+      transformHeader: h => String(h || '').replace(/^\uFEFF/, '').trim(),
+      complete: result => {
         document.getElementById('loadingOverlay').classList.remove('visible');
-        const normalized = r.data.map(row => {
-          const out = {};
-          for (const k of Object.keys(row)) out[k] = row[k] === null || row[k] === undefined ? '' : String(row[k]).trim();
-          return out;
-        });
-        processData(normalized);
+        processData(normalizeRows(result.data), { source: 'manual', loadedAt: new Date() });
       },
-      error:    () => { document.getElementById('loadingOverlay').classList.remove('visible'); showError('Erro ao processar CSV.'); }
+      error: () => {
+        document.getElementById('loadingOverlay').classList.remove('visible');
+        showError('Erro ao processar CSV.');
+      }
     });
-  } else if (ext==='xlsx'||ext==='xls') {
+  } else if (ext === 'xlsx' || ext === 'xls') {
     const reader = new FileReader();
-    reader.onload = async e => {
+    reader.onload = async event => {
       try {
         const XLSX = await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm');
-        const wb = XLSX.read(e.target.result,{type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(ws,{defval:'', raw:false});
-        const normalized = data.map(row => {
-          const out = {};
-          for (const k of Object.keys(row)) out[k] = row[k] === null || row[k] === undefined ? '' : String(row[k]);
-          return out;
-        });
+        const workbook = XLSX.read(event.target.result, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
         document.getElementById('loadingOverlay').classList.remove('visible');
-        processData(normalized);
-      } catch { document.getElementById('loadingOverlay').classList.remove('visible'); showError('Erro ao processar XLSX.'); }
+        processData(normalizeRows(data), { source: 'manual', loadedAt: new Date() });
+      } catch (error) {
+        console.error(error);
+        document.getElementById('loadingOverlay').classList.remove('visible');
+        showError('Erro ao processar XLSX.');
+      }
     };
     reader.readAsArrayBuffer(file);
   } else {
@@ -5433,6 +5966,7 @@ document.addEventListener('keydown', e => {
 });
 showWelcome();
 setupSupportFab();
+initRemoteDataSource();
 </script>
 </body>
 </html>
